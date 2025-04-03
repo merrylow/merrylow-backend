@@ -1,7 +1,7 @@
 const {PrismaClient} = require('@prisma/client')
 const prisma = new PrismaClient();
 
-const storeRefreshToken = async (userId, refreshToken, res) => {
+const saveRefreshToken = async (userId, refreshToken) => {
     try {
         await prisma.user.update(
             {
@@ -14,10 +14,10 @@ const storeRefreshToken = async (userId, refreshToken, res) => {
             }
         );
     }
-    catch(error){
-        console.error('Error storing refresh token:', error);
-        res.status(500).json({ error: 'Failed to store refresh token', details: error.message });
+    catch (error) {
+        console.error('Error saving refresh token:', error);
+        throw new Error('Failed to save refresh token');
     }
 }
 
-module.exports = storeRefreshToken;
+module.exports = saveRefreshToken;
