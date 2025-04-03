@@ -34,9 +34,14 @@ exports.loginUserService = async (email, password) => {
 
 exports.signupUserService = async (username, email, password) => {
     try {
+<<<<<<< HEAD
         // try and validate the user's email to make sure its valid and genuine
 
         // after validation, we can now save the user's details in the database
+=======
+        // attempt to create an account and prisma will throw an error if the user already exists
+
+>>>>>>> ca5df8adfe52802ab399578feb8acedbdd74096e
         const hashedPassword = await bcrypt.hash(password, 10);
         const newUser = await prisma.user.create({
             data: {
