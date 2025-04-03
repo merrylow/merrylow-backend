@@ -14,7 +14,7 @@ exports.loginUser = async (req, res) => {
 
         setRefreshToken(res, refreshToken);
 
-        res.status(200).json({accessToken});
+        res.json({accessToken});
     }catch (error) {
         console.error('Error during login:', error);
         res.status(500).json({ message: 'Internal server error' });
@@ -26,7 +26,6 @@ exports.signupUser = async (req, res) => {
     if (!username || !email || !password) {
         return res.status(400).json({message: 'Please fill in all fields'})
     }
-<<<<<<< HEAD
     try {
         const user = await authService.signupUserService(username, email, password);
         const {accessToken, refreshToken} = await authService.loginUserService(user.email, user.password);
@@ -37,27 +36,6 @@ exports.signupUser = async (req, res) => {
     catch (error) {
         console.error('Error during login:', error);
         res.status(500).json({ message: 'Internal server error' });
-=======
-
-    try {
-        const user = await authService.signupUserService(username, email, password);
-        if (!user) {
-            return res.status(400).json({message: 'User already exists'})
-        }
-        const {accessToken, refreshToken} = await authService.loginUserService(email, password);
-        res.cookie("refreshToken", refreshToken, {
-            httpOnly: true,
-            secure: true,
-            sameSite: "Strict",
-        });
-        res.status(201).json({message: 'User created successfully', accessToken});
-    } catch (error) {
-        if (error.code === 'P2002') { // Prisma unique constraint violation
-            return res.status(400).json({message: 'Email already in use'});
-        }
-        console.error('Error during signup:', error);
-        return res.status(500).json({ message: 'Internal server error' });
->>>>>>> ca5df8adfe52802ab399578feb8acedbdd74096e
     }
 }
 
@@ -70,6 +48,25 @@ exports.authenticateWithFacebook = async (req, res) => {
 }
 
 exports.logoutUser = async (req, res) => {
-//   destroy session; expire the access token; delete the refresh token from the database 
-//   res.redirect('/')
-}
+    try {
+        const { refreshToken } = req.cookies;
+
+        if (!refreshToken) {
+            return res.status(400).json({ message: "No refresh token found" });
+        }
+
+        // Delete refresh token from the database
+        await authService.removeRefreshToken(refreshToken);
+
+        res.clearCookie("refreshToken", {
+            httpOnly: true,
+            secure: true,
+            sameSite: "Strict",
+        });
+
+        res.json({ message: "Logged out successfully" });
+    } catch (error) {
+        console.error("Error during logout:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+};
