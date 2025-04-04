@@ -20,7 +20,6 @@ exports.loginUserService = async (email, password) => {
             throw new Error('Invalid password');
         }
 
-        // Generate tokens and save the refresh token in the database
         const { accessToken, refreshToken } = generateTokens(user.id, user.email);
         await saveRefreshToken(user.id, refreshToken);
 
