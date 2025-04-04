@@ -1,7 +1,7 @@
 const {PrismaClient} = require('@prisma/client')
 const prisma = new PrismaClient();
 const jwt = require('jsonwebtoken');
-require('dotenv');
+require('dotenv').config();
 
 const verifyRefreshToken = async (req, res, next) => {
     const token = req.cookies.refreshToken;
