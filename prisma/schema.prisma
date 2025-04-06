@@ -28,6 +28,7 @@ model User {
   orders      Order[]
   reviews     Review[]
   rider       Rider?
+  cart        Cart?
 }
 
 enum UserRole {
@@ -91,11 +92,40 @@ model Menu {
   available    Boolean  @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+  addOns       Json? // New field for available add-ons with prices
 
   restaurant Restaurant  @relation(fields: [restaurantId], references: [id])
   orderItems OrderItem[]
+  cartItem   CartItem[]
 
   @@map("menus")
+}
+
+model Cart {
+  id        String   @id @default(uuid())
+  userId    String   @unique // each user can have only one cart at a time
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user  User       @relation(fields: [userId], references: [id])
+  items CartItem[]
+
+  @@map("carts")
+}
+
+model CartItem {
+  id          String   @id @default(uuid())
+  cartId      String
+  menuId      String
+  quantity    Int      @default(1)
+  unitPrice   Decimal  @db.Decimal(10, 2) // total of all included options per unit
+  totalPrice  Decimal  @db.Decimal(10, 2) // quantity * unitPrice
+  description String // JSON-like breakdown e.g. {"rice": 15, "egg": 4, "salad": 5}
+  notes       String? // User custom notes like "No pepper, please"
+  createdAt   DateTime @default(now())
+
+  cart Cart @relation(fields: [cartId], references: [id])
+  menu Menu @relation(fields: [menuId], references: [id])
 }
 
 model Order {
