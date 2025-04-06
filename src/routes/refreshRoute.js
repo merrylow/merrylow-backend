@@ -1,5 +1,5 @@
 const refreshRoute = require('express').Router();
-const {refreshToken} = require('../controllers/refreshController');
+const refreshToken = require('../controllers/refreshController');
 const verifyRefreshToken = require('../middleware/verifyRefreshToken')
 
 

@@ -14,7 +14,7 @@ const verifyRefreshToken = async (req, res, next) => {
         const payload = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET);
 
         const user = await prisma.user.findUnique({
-            where: { id: payload.userId },
+            where: { id: payload.id },
         });
 
         if (!user || user.refreshToken !== token) {
@@ -36,4 +36,4 @@ const verifyRefreshToken = async (req, res, next) => {
 };
 
 
-module.exports = { verifyRefreshToken };
+module.exports =  verifyRefreshToken ;

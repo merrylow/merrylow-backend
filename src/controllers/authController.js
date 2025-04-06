@@ -2,6 +2,7 @@ const express = require('express')
 const cookieParser = require("cookie-parser");
 const authService = require('../services/authService')
 const setRefreshToken = require('../utils/setRefreshToken')
+const saveRefreshToken = require('../utils/saveRefreshToken')
 
 const app = express()
 app.use(express.json())
@@ -23,12 +24,16 @@ exports.loginUser = async (req, res) => {
 
 exports.signupUser = async (req, res) => {
     const {username, email, password} = req.body;
+    // later get the user's role as well if its available and include it in the signup process
+    // we can also validate the user's email to make sure its valid and genuine
     if (!username || !email || !password) {
         return res.status(400).json({message: 'Please fill in all fields'})
     }
     try {
         const user = await authService.signupUserService(username, email, password);
-        const {accessToken, refreshToken} = await authService.loginUserService(user.email, user.password);
+        console.log('User created:', user);
+        const {accessToken, refreshToken} = await authService.loginUserService(email, password);
+        await saveRefreshToken(user.id, refreshToken);
         setRefreshToken(res, refreshToken);
 
         res.json({accessToken});

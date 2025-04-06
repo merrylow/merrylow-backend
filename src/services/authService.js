@@ -2,8 +2,7 @@ const bcrypt = require('bcryptjs')
 const { PrismaClient } = require('@prisma/client')
 const prisma = new PrismaClient()
 const generateTokens = require('../utils/generateToken')
-const saveRefreshToken = require('./saveRefreshToken')
-const bcrypt = require('bcryptjs')
+const saveRefreshToken = require('../utils/saveRefreshToken')
 
 exports.loginUserService = async (email, password) => {
     try {
@@ -40,7 +39,7 @@ exports.signupUserService = async (username, email, password) => {
         const hashedPassword = await bcrypt.hash(password, 10);
         const newUser = await prisma.user.create({
             data: {
-                username,
+                name: username,
                 email,
                 password: hashedPassword,
             },

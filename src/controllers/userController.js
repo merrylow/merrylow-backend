@@ -11,6 +11,7 @@ exports.getCurrentUser = async (req, res) => {
                 id: true,
                 email: true,
                 name: true,
+                role: true,
                 createdAt: true,
                 // if there are any other fields you want to be included, i'll add them later
             }
