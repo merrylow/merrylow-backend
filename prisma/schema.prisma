@@ -19,6 +19,7 @@ model User {
   verificationToken String?
   codeExpiresAt     DateTime?
   campusId          Int?
+  // create a column for users location
   // image      String? // not really needed for now since we're not going to be allowing users to upload photos( we need to minimize costs)
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
