@@ -1,0 +1,79 @@
+const bcrypt = require('bcryptjs')
+const { PrismaClient } = require('@prisma/client')
+const prisma = new PrismaClient()
+const generateTokens = require('../utils/generateToken')
+const saveRefreshToken = require('../utils/saveRefreshToken')
+
+exports.loginUserService = async (email, password) => {
+    try {
+        const user = await prisma.user.findUnique({
+            where: { email },
+        });
+
+        if (!user) {
+            throw new Error('User not found');
+        }
+
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        if (!isPasswordValid) {
+            throw new Error('Invalid password');
+        }
+
+        const { accessToken, refreshToken } = generateTokens(user.id, user.email);
+        await saveRefreshToken(user.id, refreshToken);
+
+        return { accessToken, refreshToken };
+    } catch (error) {
+        console.error('Error during login:', error);
+        throw error;
+    }
+}
+
+
+exports.signupUserService = async (username, email, password) => {
+    try {
+
+        // try and validate the user's email to make sure its valid and genuine
+
+        // after validation, we can now save the user's details in the database
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const newUser = await prisma.user.create({
+            data: {
+                name: username,
+                email,
+                password: hashedPassword,
+            },
+        });
+
+        return newUser;
+    } catch (error) {
+        console.error('Error during signup:', error);
+        throw error;
+    }
+}
+
+exports.removeRefreshToken = async (refreshToken) => {
+    try {
+        const updatedUser = await prisma.user.update({
+            where: { refreshToken },
+            data: { refreshToken: null },
+            select: {
+                id: true,
+                username: true,
+                email: true,
+                password: false,
+            }
+        });
+
+        return { success: true, message: 'Refresh token removed successfully', updatedUser };
+    } catch (error) {
+        if (error.code === 'P2025') {
+            // P2025: Record not found in Prisma
+            console.warn('No user found with the given refresh token.');
+            return { success: false, message: 'Refresh token not found' };
+        }
+
+        console.error('Error removing refresh token:', error);
+        throw new Error('Failed to remove refresh token');
+    }
+};
