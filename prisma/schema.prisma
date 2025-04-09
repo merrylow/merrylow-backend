@@ -155,11 +155,14 @@ enum OrderStatus {
 }
 
 model OrderItem {
-  id       String  @id @default(uuid())
-  orderId  String
-  menuId   String
-  quantity Int
-  price    Decimal @db.Decimal(10, 2)
+  id          String  @id @default(uuid())
+  orderId     String
+  menuId      String
+  quantity    Int
+  unitPrice   Decimal @db.Decimal(10, 2)
+  totalPrice  Decimal @db.Decimal(10, 2)
+  description String // JSON-like string
+  notes       String?
 
   order Order @relation(fields: [orderId], references: [id])
   menu  Menu  @relation(fields: [menuId], references: [id])
