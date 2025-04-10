@@ -10,11 +10,35 @@ exports.getRestaurants = async () => {
     }
 };
 
+
 exports.getRestaurantById = async (restaurantId) => {
     try {
         return await prisma.restaurant.findUnique({
             where: {
                 id: restaurantId
+            },
+            include: {
+                owner: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        phone: true
+                    }
+                },
+                menus: true,
+                reviews: {
+                    include: {
+                        user: {
+                            select: {
+                                id: true,
+                                name: true,
+                                // avatar: true frontend will handle the avatar, maybe use some dummy avatar for now, later we'll be using user images
+                            }
+                        }
+                    }
+                },
+                // optionally include other fields like openingHours, categories, etc.
             }
         });
     } catch (error) {
@@ -22,3 +46,4 @@ exports.getRestaurantById = async (restaurantId) => {
         throw new Error('Failed to fetch restaurant');
     }
 };
+
