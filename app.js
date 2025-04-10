@@ -5,6 +5,7 @@ const refreshRoute = require('./src/routes/refreshRoute')
 const userRoute = require('./src/routes/usersRoute')
 const checkoutRoute = require('./src/routes/checkoutRoute')
 const orderRoute = require('./src/routes/orderRoute');
+const restaurantRoute = require('./src/routes/restaurantRoute')
 
 const app = express();
 
@@ -16,6 +17,7 @@ app.use('/', refreshRoute);
 app.use('/users', userRoute);
 app.use('/checkout', checkoutRoute);
 app.use('/orders', orderRoute);
+app.use('/restaurant', restaurantRoute)
 
 app.get('/', (req, res) => {
     res.send('Welcome to the API!');
