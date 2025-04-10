@@ -2,6 +2,7 @@ const express = require('express')
 const cookieParser = require("cookie-parser");
 const authService = require('../services/authService')
 const setRefreshToken = require('../utils/setRefreshToken')
+const saveRefreshToken = require('../utils/saveRefreshToken')
 
 const app = express()
 app.use(express.json())
@@ -26,6 +27,8 @@ exports.loginUser = async (req, res) => {
 
 exports.signupUser = async (req, res) => {
     const {username, email, password} = req.body;
+    // later get the user's role as well if its available and include it in the signup process
+     // we can also validate the user's email to make sure its valid and genuine
     if (!username || !email || !password) {
         return res.status(400).json({message: 'Please fill in all fields'})
     }
@@ -33,7 +36,7 @@ exports.signupUser = async (req, res) => {
         const user = await authService.signupUserService(username, email, password);
         const {accessToken, refreshToken} = await authService.loginUserService(email, password);
         setRefreshToken(res, refreshToken);
-
+        await saveRefreshToken(user.id, refreshToken);
         res.json({accessToken, refreshToken});
     }
     catch (error) {
@@ -55,5 +58,26 @@ exports.authenticateWithFacebook = async (req, res) => {
 
 exports.logoutUser = async (req, res) => {
 //   destroy session; expire the access token; delete the refresh token from the database 
-//   res.redirect('/')
+    try {
+        const { refreshToken } = req.cookies;
+
+        if (!refreshToken) {
+            return res.status(400).json({ message: "No refresh token found" });
+        }
+
+        // Delete refresh token from the database
+        await authService.removeRefreshToken(refreshToken);
+
+        res.clearCookie("refreshToken", {
+            httpOnly: true,
+            secure: true,
+            sameSite: "Strict",
+        });
+
+        res.json({ message: "Logged out successfully" });
+    } catch (error) {
+        console.error("Error during logout:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+    //   res.redirect('/')
 }
