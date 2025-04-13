@@ -72,7 +72,8 @@ model Restaurant {
   startTime String // the time should be converted to string before storing
   endTime   String
   available Boolean  @default(true)
-  // add categories to restaurant later
+  verified  Boolean  @default(false)
+  category  String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -95,7 +96,7 @@ model Menu {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   addOns       Json? // New field for available add-ons with prices
-  // add categories to menus later
+  category     String?
 
   restaurant Restaurant  @relation(fields: [restaurantId], references: [id])
   orderItems OrderItem[]
