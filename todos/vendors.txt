@@ -1,0 +1,28 @@
+•	GET /vendor/restaurant vendors can get their own restaurant
+•	GET /vendor/products vendors can get their own products
+•	PUT /vendor/restaurant/:id → Update their own restaurant details (e.g., name, address, cuisine)
+•	POST /vendor/restaurant vendors can create another restaurant( but here, the admin will have to validate it first)
+•	POST /vendor/products → Add product // we’ll have to include a bunch of products and their images so that when a vendor tries try to create a product they wouldn’t have to upload any bad photo, but then we’ll fetch one of the images of the product for them….  If a product happens to not appear in our already created lists of products, it means, the vendor will have to wait till their product is approved
+•	PUT /vendor/products/:id → Update product
+•	DELETE /vendor/products/:id → Remove product
+    DELETE /vendor/restaurant/:id -> vendors can decide to delete one of their restaurant...
+
+when a user creates as a vendor they can create several restaurants if they want to
+but their restaurants will be validated and approved by the admins before it will be added
+same happens to adding of new products...
+
+
+should we add the ownerId to the menu schema??? 
+in this case we can validate that the product/menu an owner/vendor is trying to update actually belongs to them…
+
+
+when the vendor opens their page/dashboard, should we fetch all the restaurants owned by that vendor and display them setting their ids as the restaurantId so that the frontend can be making request using that id
+
+since vendors can add products specific to a particular restaurant, 
+should the endpoint; POST /vendor/products
+be updated to this; POST /vendor/products/restaurantId 
+or instead the restaurant id is placed in the body when the request is made
+
+should a similar logic be applied to when they try to get a specific product related to one of their restaurant??
+
+remember to add categories to the menu/product table
