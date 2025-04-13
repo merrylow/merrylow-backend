@@ -7,6 +7,9 @@
 •	DELETE /vendor/products/:id → Remove product
     DELETE /vendor/restaurant/:id -> vendors can decide to delete one of their restaurant...
 
+include a simple GET /vendor route which gets the details of the vendor(similar to the auth/me route)
+
+
 when a user creates as a vendor they can create several restaurants if they want to
 but their restaurants will be validated and approved by the admins before it will be added
 same happens to adding of new products...
