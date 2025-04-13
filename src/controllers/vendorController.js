@@ -6,10 +6,10 @@ const vendorService = require('../services/vendorService');
 
 exports.getVendorRestaurant = async (req, res) => {
     try {
-        const { vendorId, userRole } = req.user;
+        const { id, userRole } = req.user;
         if (userRole !== 'VENDOR') return res.status(403).json({ message: 'Forbidden' });
 
-        const restaurants = await vendorService.getRestaurants(vendorId);
+        const restaurants = await vendorService.getRestaurants(id);
 
         if (!restaurants.length) return res.status(404).json({ message: 'No restaurants found' });
 
@@ -23,14 +23,14 @@ exports.getVendorRestaurant = async (req, res) => {
 
 exports.getVendorProducts = async (req, res) => {
     try {
-        const { vendorId, userRole } = req.user;
+        const { id, userRole } = req.user;
         if (!userRole || userRole !== "VENDOR") {
             return res.status(403).json({ message: 'Forbidden' });
         }
 
         const restaurantId = req.body.restaurantId || req.query.restaurantId;
 
-        const products = await vendorService.getProducts(vendorId, restaurantId);
+        const products = await vendorService.getProducts(id, restaurantId);
 
         if (!products || products.length === 0) {
             return res.status(404).json({ message: 'No products found for this vendor' });
@@ -50,7 +50,7 @@ exports.getVendorProducts = async (req, res) => {
 
 exports.addVendorRestaurant = async (req, res) => {
     try {
-        const { vendorId, userRole } = req.user;
+        const { id, userRole } = req.user;
 
         if (userRole !== "VENDOR") {
             return res.status(403).json({ message: "Forbidden" });
@@ -71,7 +71,7 @@ exports.addVendorRestaurant = async (req, res) => {
             location,
             startTime,
             endTime,
-            ownerId: vendorId,
+            ownerId: id,
         });
 
         return res.status(201).json({
@@ -88,13 +88,13 @@ exports.addVendorRestaurant = async (req, res) => {
 
 exports.updateVendorRestaurant = async (req, res) => {
     try {
-        const {vendorId, userRole} = req.user;
+        const {id, userRole} = req.user;
         if (!userRole || userRole !== "VENDOR") return res.status(403).json({ message: 'Forbidden' });
         
         const restaurantId = req.params.id;
         if (!restaurantId ) return res.status(400).json({ message: 'Restaurant ID is required' });
 
-        const updatedRestaurant = await vendorService.updateRestaurant(vendorId, restaurantId, req.body);
+        const updatedRestaurant = await vendorService.updateRestaurant(id, restaurantId, req.body);
         if (!updatedRestaurant) {
             return res.status(404).json({ message: 'Restaurant not found' });
         }
@@ -113,7 +113,7 @@ exports.addVendorProduct = async (req, res) => {
         // since vendors can add products specific to just one of their restaurants if they have many
         // their restaurantId should be included in their body when they make the request
 
-        const { vendorId, userRole } = req.user;
+        const { id, userRole } = req.user;
         if (userRole !== "VENDOR") {
             return res.status(403).json({ message: 'Forbidden' });
         }
@@ -129,7 +129,7 @@ exports.addVendorProduct = async (req, res) => {
         // since each product will have to displayed with images
         // (and we can't trust the vendors to upload the right images, we'll handle the logic later....)
 
-        const newProduct = await vendorService.addProduct(vendorId, restaurantId, {
+        const newProduct = await vendorService.addProduct(id, restaurantId, {
             name,
             price,
             description,
@@ -147,7 +147,7 @@ exports.addVendorProduct = async (req, res) => {
 
 exports.updateVendorProduct = async (req, res) => {
     try {
-        const { vendorId, userRole } = req.user;
+        const { id, userRole } = req.user;
         if (userRole !== "VENDOR") {
             return res.status(403).json({ message: 'Forbidden' });
         }
@@ -166,7 +166,7 @@ exports.updateVendorProduct = async (req, res) => {
         }
 
         // NOTE: Image update handling will come later
-        const updatedProduct = await vendorService.updateProduct(vendorId, productId, req.body);
+        const updatedProduct = await vendorService.updateProduct(id, productId, req.body);
         if (!updatedProduct) {
             return res.status(404).json({ message: 'Product not found or unauthorized' });
         }
@@ -182,7 +182,7 @@ exports.updateVendorProduct = async (req, res) => {
 
 exports.deleteVendorProduct = async (req, res) => {
     try {
-        const { vendorId, userRole } = req.user;
+        const { id, userRole } = req.user;
         const productId = req.params.id;
 
         const restaurantId = req.body.restaurantId;
@@ -192,7 +192,7 @@ exports.deleteVendorProduct = async (req, res) => {
             return res.status(403).json({ message: 'Forbidden' });
         }
 
-        const deletedProduct = await vendorService.deleteProduct(vendorId, restaurantId, productId);
+        const deletedProduct = await vendorService.deleteProduct(id, restaurantId, productId);
         return res.status(200).json({ deletedProduct });
 
     } catch (err) {
@@ -204,7 +204,7 @@ exports.deleteVendorProduct = async (req, res) => {
 
 exports.deleteVendorRestaurant = async (req, res) => {
     try {
-        const { vendorId, userRole } = req.user;
+        const { id, userRole } = req.user;
         const restaurantId = req.params.id;
 
         if (!restaurantId) {
@@ -215,7 +215,7 @@ exports.deleteVendorRestaurant = async (req, res) => {
             return res.status(403).json({ message: 'Forbidden' });
         }
 
-        const deletedRestaurant = await vendorService.deleteRestaurant(vendorId, restaurantId);
+        const deletedRestaurant = await vendorService.deleteRestaurant(id, restaurantId);
         return res.status(200).json({ deletedRestaurant });
 
     } catch (err) {
