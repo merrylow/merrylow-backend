@@ -21,6 +21,31 @@ exports.getVendorRestaurant = async (req, res) => {
 };
 
 
+exports.getVendorRestaurantById = async (req, res) => {
+    try {
+        const { id, userRole } = req.user;
+        const restaurantId = req.params.id
+
+        if (!userRole || userRole !== "VENDOR") {
+            return res.status(403).json({ message: 'Forbidden' });
+        }
+
+        if (!restaurantId) return res.status(400).json({ message: 'Restaurant ID is required' });
+
+        const restaurant = await vendorService.getRestaurantById(id, restaurantId);
+        if (!restaurant) {
+            return res.status(404).json({ success: false, message: 'Restaurant not found' });
+        }
+
+        res.status(200).json({ success: true, data: restaurant });
+
+    } catch (error ){
+        console.error(`Error fetching restaurant ${id}:`, error);
+        res.status(500).json({ success: false, message: 'Server Error', error: error.message });
+    }
+}
+
+
 exports.getVendorProducts = async (req, res) => {
     try {
         const { id, userRole } = req.user;
@@ -28,7 +53,7 @@ exports.getVendorProducts = async (req, res) => {
             return res.status(403).json({ message: 'Forbidden' });
         }
 
-        const restaurantId = req.body.restaurantId || req.query.restaurantId;
+        const restaurantId = req.query?.restaurantId;
 
         const products = await vendorService.getProducts(id, restaurantId);
 
@@ -46,6 +71,30 @@ exports.getVendorProducts = async (req, res) => {
         res.status(500).json({ message });
     }
 };
+
+
+exports.getVendorProductById = async (req, res) => {
+    try {
+        const { id, userRole } = req.user;
+        if (!userRole || userRole !== "VENDOR") {
+            return res.status(403).json({ message: 'Forbidden' });
+        }
+
+        const restaurantId = req.query?.restaurantId;
+
+        const productId = req.params.id;
+
+        const product = await vendorService.getProductById(id, restaurantId, productId);
+        if (!product) {
+            return res.status(404).json({ message: "Product not found" });
+        }
+        res.status(200).json(product);
+    } catch (error) {
+        console.error("Product Fetch by ID Error:", error);
+        res.status(500).json({ success: false, message: 'Server Error', error: error.message });
+
+    }
+}
 
 
 exports.addVendorRestaurant = async (req, res) => {
@@ -185,7 +234,7 @@ exports.deleteVendorProduct = async (req, res) => {
         const { id, userRole } = req.user;
         const productId = req.params.id;
 
-        const restaurantId = req.body.restaurantId;
+        const restaurantId = req.query?.restaurantId;
         if (!restaurantId) return res.status(400).json({ message: 'Restaurant ID is required' });
 
         if (!userRole || userRole !== "VENDOR") {
