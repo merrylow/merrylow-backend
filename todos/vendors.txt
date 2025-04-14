@@ -7,14 +7,34 @@
 •	DELETE /vendor/products/:id → Remove product
     DELETE /vendor/restaurant/:id -> vendors can decide to delete one of their restaurant...
 
+
+// vendors can also get products by id.... before they update a product, they'd have to click that product first
+//so the endpoint GET /vendor/products/:id should be included
+// if vendors have multpiple restaurants, after they click on one, we'd have to get a restaurant based on an id
+// so the endpoint GET /vendor/restaurant/:id
+
+
+all get requests with id's which i am getting from the body should be gotten from the req.query instead
+
+go through all the error handlings and make sure the approapriate messages are sent based on the right error
+
+since we wouldnt want any restaurant to edit another resturants details... we always make sure we fetch data related to that vendor and restaurant alone
+so for products when we get products by id, the products would have the restaurants
+
+a solid approach to prevent multiple database call;
+// here we fetch the product based on that product id, 
+// include the restaurat details, after that we compare if the owner of that restaurant is the vendorId we got
+
+include a simple GET /vendor route which gets the details of the vendor(similar to the auth/me route)
+
+
 when a user creates as a vendor they can create several restaurants if they want to
 but their restaurants will be validated and approved by the admins before it will be added
 same happens to adding of new products...
 
 
 should we add the ownerId to the menu schema??? 
-in this case we can validate that the product/menu an owner/vendor is trying to update actually belongs to them…
-
+in this case we can validate that the product/menu when an owner/vendor is trying to update actually belongs to them…
 
 when the vendor opens their page/dashboard, should we fetch all the restaurants owned by that vendor and display them setting their ids as the restaurantId so that the frontend can be making request using that id
 
@@ -24,5 +44,3 @@ be updated to this; POST /vendor/products/restaurantId
 or instead the restaurant id is placed in the body when the request is made
 
 should a similar logic be applied to when they try to get a specific product related to one of their restaurant??
-
-remember to add categories to the menu/product table

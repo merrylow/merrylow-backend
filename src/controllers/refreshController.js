@@ -5,7 +5,7 @@ const refreshToken =  async ( req, res) => {
     if (!user) {
         return res.status(403).json({ message: "Invalid refresh token" });
     }
-    const {accessToken} = generateTokens(user.id, user.email);
+    const {accessToken} = generateTokens(user.id, user.userRole, user.email);
     return res.status(200).json({accessToken});
 }
 

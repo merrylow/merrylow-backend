@@ -1,6 +1,7 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
+// since we wouldnt want any restaurant to edit another resturants details... we always make sure we fetch data related to that vendor and restaurant alone
 //  if a user is confirmed to be a vendor, lets make sure they can only access their own restaurant and products
 
 exports.getRestaurants = async (vendorId) => {
@@ -18,7 +19,44 @@ exports.getRestaurants = async (vendorId) => {
 }
 
 
+exports.getRestaurantById = async (vendorId, restaurantId) => {
+    try {
+        return await prisma.restaurant.findUnique ( {
+            where: {
+                id : restaurantId,
+                ownerId : vendorId
+            },
+            include: {
+                owner: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true
+                        // phone: true :update here later when included in the database schema
+                    }
+                },
+                menus: true,
+                reviews: {
+                    include: {
+                        user: {
+                            select: {
+                                id: true,
+                                name: true,
+                            }
+                        }
+                    }
+                },
+            }
+        })
+    } catch (error){
+        console.error('Error fetching restaurant:', error);
+        throw new Error('Could not fetch restaurant');
+    }
+}
+
+
 exports.getProducts = async (vendorId, restaurantId = null) => {
+    // here we either get all products of the vendor or get products from one of the vendors Restaurants(assuming the restaurantId is provided)
     try {
         if (restaurantId) {
             const restaurant = await prisma.restaurant.findFirst({
@@ -53,6 +91,33 @@ exports.getProducts = async (vendorId, restaurantId = null) => {
         throw new Error('Could not fetch products');
     }
 };
+
+
+exports.getProductById = async (vendorId, restaurantId, productId) => {
+    try {
+
+        const product = await prisma.menu.findUnique({
+            where: {
+                id: productId,
+            },
+            include: {
+                restaurant: true,
+            },
+        });
+        
+        if (!product || product.restaurant.ownerId !== vendorId) {
+            throw new Error('Unauthorized access to restaurant');
+        }
+        
+        if (restaurantId && product.restaurantId !== restaurantId) {
+            throw new Error('Restaurant ID mismatch');
+        }
+        
+        return product;
+    } catch (error) {
+        throw new Error("Error fetching product: " + error.message);
+    }
+}
 
 
 exports.addRestaurant = async (data) => {

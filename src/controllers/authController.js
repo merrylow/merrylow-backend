@@ -26,14 +26,14 @@ exports.loginUser = async (req, res) => {
 }
 
 exports.signupUser = async (req, res) => {
-    const {username, email, password} = req.body;
+    const {username, email, password, role} = req.body;
     // later get the user's role as well if its available and include it in the signup process
      // we can also validate the user's email to make sure its valid and genuine
     if (!username || !email || !password) {
         return res.status(400).json({message: 'Please fill in all fields'})
     }
     try {
-        const user = await authService.signupUserService(username, email, password);
+        const user = await authService.signupUserService(username, email, password, role);
         const {accessToken, refreshToken} = await authService.loginUserService(email, password);
         setRefreshToken(res, refreshToken);
         await saveRefreshToken(user.id, refreshToken);

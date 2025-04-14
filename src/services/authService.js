@@ -19,7 +19,7 @@ exports.loginUserService = async (email, password) => {
             throw new Error('Invalid password');
         }
 
-        const { accessToken, refreshToken } = generateTokens(user.id, user.email);
+        const { accessToken, refreshToken } = generateTokens(user.id, user.role, user.email);
         await saveRefreshToken(user.id, refreshToken);
 
         return { accessToken, refreshToken };
@@ -30,7 +30,7 @@ exports.loginUserService = async (email, password) => {
 }
 
 
-exports.signupUserService = async (username, email, password) => {
+exports.signupUserService = async (username, email, password, role) => {
     try {
 
         // try and validate the user's email to make sure its valid and genuine
@@ -42,6 +42,7 @@ exports.signupUserService = async (username, email, password) => {
                 name: username,
                 email,
                 password: hashedPassword,
+                role
             },
         });
 
