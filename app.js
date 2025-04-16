@@ -15,15 +15,15 @@ const app = express();
 app.use(express.json());
 app.use(cookieParser());
 
-app.use('api/auth', authRoute);
-app.use('api/refresh', refreshRoute);
-app.use('api/users', userRoute);
-app.use('api/checkout', checkoutRoute);
-app.use('api/orders', orderRoute);
-app.use('api/restaurant', restaurantRoute)
-app.use('api/products', productRoute);
-app.use('api/vendor', vendorRoute);
-app.use('api/account', accountRoute);
+app.use('/api/auth', authRoute);
+app.use('/api/refresh', refreshRoute);
+app.use('/api/users', userRoute);
+app.use('/api/checkout', checkoutRoute);
+app.use('/api/orders', orderRoute);
+app.use('/api/restaurant', restaurantRoute)
+app.use('/api/products', productRoute);
+app.use('/api/vendor', vendorRoute);
+app.use('/api/account', accountRoute);
 
 app.get('/', (req, res) => {
     res.send('Welcome to the API!');
