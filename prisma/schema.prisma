@@ -11,6 +11,8 @@ model User {
   id                String    @id @default(uuid())
   name              String
   email             String?   @unique
+  phone             String?
+  location          String?
   password          String?
   provider          String?   @default("local") // local, google, facebook
   providerId        String?

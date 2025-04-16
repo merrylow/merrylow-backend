@@ -1,5 +1,0 @@
-creating, updating and deletion of the restaurant will be implement in the vendor route; since its the vendors who handle their own restaurants
-
-API Endpoints:
-•	GET /restaurants → Fetch all restaurants
-•	GET /restaurant/:id → Fetch one restaurant

@@ -1,18 +1,4 @@
-•	GET /vendor/restaurant vendors can get their own restaurant
-•	GET /vendor/products vendors can get their own products
-•	PUT /vendor/restaurant/:id → Update their own restaurant details (e.g., name, address, cuisine)
-•	POST /vendor/restaurant vendors can create another restaurant( but here, the admin will have to validate it first)
-•	POST /vendor/products → Add product // we’ll have to include a bunch of products and their images so that when a vendor tries try to create a product they wouldn’t have to upload any bad photo, but then we’ll fetch one of the images of the product for them….  If a product happens to not appear in our already created lists of products, it means, the vendor will have to wait till their product is approved
-•	PUT /vendor/products/:id → Update product
-•	DELETE /vendor/products/:id → Remove product
-    DELETE /vendor/restaurant/:id -> vendors can decide to delete one of their restaurant...
-
-
 // vendors can also get products by id.... before they update a product, they'd have to click that product first
-//so the endpoint GET /vendor/products/:id should be included
-// if vendors have multpiple restaurants, after they click on one, we'd have to get a restaurant based on an id
-// so the endpoint GET /vendor/restaurant/:id
-
 
 all get requests with id's which i am getting from the body should be gotten from the req.query instead
 
@@ -41,6 +27,6 @@ when the vendor opens their page/dashboard, should we fetch all the restaurants 
 since vendors can add products specific to a particular restaurant, 
 should the endpoint; POST /vendor/products
 be updated to this; POST /vendor/products/restaurantId 
-or instead the restaurant id is placed in the body when the request is made
+or instead the restaurant id is placed in the req.query when the request is made
 
 should a similar logic be applied to when they try to get a specific product related to one of their restaurant??

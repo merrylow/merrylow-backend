@@ -21,7 +21,7 @@ exports.loginUser = async (req, res) => {
             return res.status(400).json({ message: 'Invalid User Credentials!' });
         }
         console.error('Error during login:', error);
-        res.status(500).json({ message: 'Internal server error' });
+        res.status(500).json({ message: 'Internal server error', error });
     }
 }
 

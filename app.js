@@ -8,6 +8,7 @@ const orderRoute = require('./src/routes/orderRoute');
 const restaurantRoute = require('./src/routes/restaurantRoute')
 const productRoute = require('./src/routes/productRoute')
 const vendorRoute = require('./src/routes/vendorRoute')
+const accountRoute = require('./src/routes/accountRoute')
 
 const app = express();
 
@@ -22,6 +23,7 @@ app.use('/orders', orderRoute);
 app.use('/restaurant', restaurantRoute)
 app.use('/products', productRoute);
 app.use('/vendor', vendorRoute);
+app.use('/account', accountRoute);
 
 app.get('/', (req, res) => {
     res.send('Welcome to the API!');

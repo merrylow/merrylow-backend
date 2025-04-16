@@ -7,6 +7,6 @@ cartRoute.get('/cart', verifyAccessToken, getCartItems);
 cartRoute.post('/cart', verifyAccessToken, addToCart);
 cartRoute.put('/cart/:id', verifyAccessToken, updateCartItem);    
 cartRoute.delete('/cart/:id', verifyAccessToken, deleteFromCart);
-cartRoute.delete('/delete', verifyAccessToken, deleteAllCartItems)
+cartRoute.delete('/cart', verifyAccessToken, deleteAllCartItems)
 
 module.exports = cartRoute;
