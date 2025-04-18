@@ -157,6 +157,7 @@ enum OrderStatus {
   IN_PROGRESS
   DELIVERED
   CANCELLED
+  DECLINED // include this in case the restaurant declines the order 
 }
 
 model OrderItem {

@@ -296,3 +296,61 @@ exports.deleteRestaurant = async (vendorId, restaurantId) => {
         throw new Error(error.message || 'Could not delete restaurant');
     }
 };
+
+
+exports.fetchVendorOrders = async (vendorId, status) => {
+    return await prisma.order.findMany({
+        where: {
+            restaurant : {
+                ownerId : vendorId,
+            },
+            ...(status && { status })
+        },
+        include: {
+            orderItems: {
+                include: { menu: true }
+            },
+            user: true
+        },
+        orderBy: {
+            createdAt: 'desc'
+        }
+  });
+};
+
+
+exports.fetchVendorOrderById = async (orderId, vendorId) => {
+    return await prisma.order.findFirst({
+        where: {
+            id: orderId,
+            restaurant : {
+                ownerId: vendorId,
+            }
+        },
+        include: {
+            orderItems: {
+                include: { menu: true }
+            },
+            user: true
+        }
+    });
+};
+
+
+exports.updateOrderStatus = async (orderId, vendorId, status) => {
+    const order = await prisma.order.findFirst({
+        where: {
+            id: orderId,
+            restaurant: {
+                ownerId: vendorId,
+            }
+        }
+    });
+
+    if (!order) return null;
+
+    return await prisma.order.update({
+        where: { id: orderId },
+            data: { status }
+    });
+};

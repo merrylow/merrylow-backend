@@ -1,0 +1,25 @@
+since the cart will be containing the cart items which will be having their id's...
+we make sure when the user selects items to be checkout...
+those items should be of the same restaurant
+
+when the items are selected and user clicks checkout
+the frontend checkouts with the id of those cartitems
+since the calcuations and everything has been done and stored in the cart already\
+we fetch the details of the price and every thing and initiate a payment
+//which means paystack Functionalities come in play at this point
+once payment is made...
+we initaite an order with status paid
+
+or should we allow users the option to get their orders first before payment( i don't think so but we'll consider that later)
+should users be allowed to edit their items once they are in the cart???
+if yes, we'll handle that later...
+but atleast they should be allowed to edit the quantity of what they added to the cart
+so maybe the checkout request will be made with the payload;
+{
+  "items": [
+    { "carId": "abc123", "quantity": 2 },
+    { "cartId": "xyz789", "quantity": 1 }
+  ],
+  "paymentMethod": "card", // or "mobile_money", "cash_on_delivery"
+  "deliveryAddress": "Zigla Mansion, Zigla City "
+}

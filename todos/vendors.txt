@@ -1,3 +1,10 @@
+new vendor routes to be implemented;
+Functionality | Route | Method | Description
+Get all vendor orders | /vendor/orders | GET | Filter by restaurant/vendor ID
+Get order details | /vendor/orders/:id | GET | See all items, user info, status
+Update order status | /vendor/orders/:id/status | PATCH | accept, in_progress, declined, completed
+
+
 // vendors can also get products by id.... before they update a product, they'd have to click that product first
 
 all get requests with id's which i am getting from the body should be gotten from the req.query instead

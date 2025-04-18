@@ -11,7 +11,10 @@ const {
     deleteVendorProduct,
     deleteVendorRestaurant,
     getVendorProductById,
-    getVendorRestaurantById
+    getVendorRestaurantById,
+    getVendorOrders,
+    getVendorOrderById,
+    patchVendorOrderStatus
   } = require('../controllers/vendorController');
   
 vendorRoute.use(verifyAccessToken);
@@ -26,6 +29,9 @@ vendorRoute.put('/products/:id', updateVendorProduct)
 vendorRoute.put('/restaurant/:id', updateVendorRestaurant)
 vendorRoute.delete('/products/:id', deleteVendorProduct)
 vendorRoute.delete('/restaurant/:id', deleteVendorRestaurant)
+vendorRoute.get('/orders', getVendorOrders);
+vendorRoute.get('/orders/:id', getVendorOrderById);
+vendorRoute.patch('/orders/:id/status', patchVendorOrderStatus);
 
 
 module.exports = vendorRoute;

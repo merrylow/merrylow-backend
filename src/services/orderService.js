@@ -1,6 +1,8 @@
 const {PrismaClient, Prisma } = require('@prisma/client');
 const prisma = new PrismaClient();
 
+// this logic needs to be changed... since the user will select specific items from the cart before checkout
+//hence we dont have to fetch all the items
 exports.placeOrder = async (userId) => {
   const cart = await prisma.cart.findUnique({
     where: { userId },

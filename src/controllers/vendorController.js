@@ -272,3 +272,67 @@ exports.deleteVendorRestaurant = async (req, res) => {
         return res.status(500).json({ message: err.message || 'Internal server error' });
     }
 };
+
+
+exports.getVendorOrders = async (req, res) => {
+    const vendorId = req.user.id;
+    const userRole  = req.user.userRole;
+
+    if (userRole !== "VENDOR") {
+        return res.status(403).json({ message: "Forbidden" });
+    }
+
+    const { status } = req.query;
+  
+    try {
+        const orders = await vendorService.fetchVendorOrders(vendorId, status);
+        res.json({ orders });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "Failed to fetch vendor orders" });
+    }
+};
+  
+
+exports.getVendorOrderById = async (req, res) => {
+    const vendorId = req.user.id;
+    const { id } = req.params;
+  
+    try {
+        order = await vendorService.fetchVendorOrderById(id, vendorId);
+  
+        if (!order) {
+            return res.status(404).json({ message: "Order not found or unauthorized" });
+        }
+  
+        res.json({ order });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "Failed to fetch order details" });
+    }
+};
+  
+
+exports.patchVendorOrderStatus = async (req, res) => {
+    const vendorId = req.user.id;
+    const { id } = req.params;
+    const { status } = req.body;
+  
+    const validStatuses = ["PENDING", "IN_PROGRESS", "COMPLETED", "CANCELLED", "DECLINED", "ACCEPTED"];
+    if (!validStatuses.includes(status)) {
+        return res.status(400).json({ message: "Invalid status value" });
+    }
+  
+    try {
+        const updated = await vendorService.updateOrderStatus(id, vendorId, status);
+    
+        if (!updated) {
+            return res.status(404).json({ message: "Order not found or unauthorized" });
+        }
+    
+        res.json({ message: "Order status updated", order: updated });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "Failed to update order status" });
+    }
+};
