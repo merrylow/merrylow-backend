@@ -126,6 +126,31 @@ exports.updateCartItem = async (req, res) => {
 }
 
 
+exports.updateCartItemQuantity = async (req, res) => {
+  try {
+    const { itemId } = req.params;
+    const userId = req.user.id;
+    const { quantity} = req.body;
+
+    if (quantity && quantity < 1) {
+      return res.status(400).json({ success: false, message: "Quantity must be at least 1" });
+    };
+    
+    const updatedItem = await cartService.updateCartItemQuantity({itemId, userId, quantity });
+
+    return res.status(200).json({
+      success: true,
+      message: "Cart item updated successfully",
+      data: updatedItem,
+    });
+
+  } catch(error){
+    console.error(error);
+    return res.status(500).json({ success: false, message: error.message || "Something went wrong",}); 
+  }
+}
+
+
 exports.deleteFromCart = async (req, res) => {
   try {
     const userId = req.user.id;

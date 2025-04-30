@@ -1,12 +1,13 @@
 const express = require('express');
 const cartRoute = express.Router();
 const verifyAccessToken = require('../middleware/verifyAccessToken');
-const {getCartItems, addToCart, deleteFromCart, updateCartItem, deleteAllCartItems, deleteAllCartItems} = require('../controllers/cartController');
+const {getCartItems, addToCart, deleteFromCart, updateCartItem, deleteAllCartItems, updateCartItemQuantity} = require('../controllers/cartController');
 
-cartRoute.get('/cart', verifyAccessToken, getCartItems); 
-cartRoute.post('/cart', verifyAccessToken, addToCart);
-cartRoute.put('/cart/:id', verifyAccessToken, updateCartItem);    
-cartRoute.delete('/cart/:id', verifyAccessToken, deleteFromCart);
-cartRoute.delete('/cart', verifyAccessToken, deleteAllCartItems)
+cartRoute.get('/', verifyAccessToken, getCartItems); 
+cartRoute.post('/', verifyAccessToken, addToCart);
+cartRoute.put('/item/:id', verifyAccessToken, updateCartItem); 
+cartRoute.patch('/item/:id', verifyAccessToken, updateCartItemQuantity )   
+cartRoute.delete('/item/:id', verifyAccessToken, deleteFromCart);
+cartRoute.delete('/', verifyAccessToken, deleteAllCartItems)
 
 module.exports = cartRoute;
