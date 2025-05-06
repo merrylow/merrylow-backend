@@ -6,6 +6,7 @@ const saveRefreshToken = require('../utils/saveRefreshToken')
 const jwt = require('jsonwebtoken');
 const emailService = require('../services/emailService');
 const { getHtmlEmail } = require('../utils/getHtmlEmail');
+const { getPasswordResetHtml } = require('../utils/getPasswordResetHtml')
 
 const EMAIL_TOKEN_SECRET = process.env.EMAIL_TOKEN_SECRET;
 const EMAIL_TOKEN_EXPIRY = '10m';
@@ -84,7 +85,60 @@ exports.createUserAccount = async (email, username, hashedPassword, role ) =>{
     return newUser;
 }
 
+  
+exports.sendPasswordResetEmail = async (user) => {
+    const token = jwt.sign({ email: user.email }, process.env.JWT_RESET_SECRET, { expiresIn: '10m' })
+    const resetLink = `http://localhost:5000/api/auth/reset-password?token=${token}`;
 
+    await emailService.sendEmail(
+      user.email,
+      'Reset your password',
+      `Reset link: ${resetLink}`,
+      getPasswordResetHtml(user.name || 'there', resetLink)
+    );
+  
+    return true;
+};
+  
+
+exports.resetUserPassword = async (token, newPassword) => {
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_RESET_SECRET);
+        const userEmail = decoded.email;
+    
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+    
+        await prisma.user.update({
+            where: { email: userEmail },
+            data: { password: hashedPassword },
+        });
+    
+        return true;
+    } catch (err) {
+        throw new Error('Invalid or expired token');
+    }
+};
+
+
+
+exports.changeUserPassword = async (userId, oldPassword, newPassword) => {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new Error('User not found');
+  
+    const match = await bcrypt.compare(oldPassword, user.password);
+    if (!match) throw new Error('Old password is incorrect');
+  
+    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+  
+    await prisma.user.update({
+        where: { id: userId },
+        data: { password: hashedNewPassword },
+    });
+  
+    return true;
+};
+
+  
 exports.removeRefreshToken = async (refreshToken) => {
     try {
         const userToUpdate = await prisma.user.findFirst({
