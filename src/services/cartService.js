@@ -1,6 +1,6 @@
-const { PrismaClient } = require('../prismaClient');
+const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
-const Decimal = require('decimal.js'); // For precision
+const Decimal = require('decimal.js');
 const processSelectedAddons = require('../utils/processSelectedAddons')
 
 exports.getCartItemsByUser = async (userId) => {
@@ -9,7 +9,7 @@ exports.getCartItemsByUser = async (userId) => {
         userId: userId,
       },
       include: {
-        items: { // after getting cart pls check if items is empty before redering...
+        items: {
           include: {
             menu: true,
           },
@@ -17,7 +17,7 @@ exports.getCartItemsByUser = async (userId) => {
       },
     });
   
-    return cart; // full cart object with items and metadata
+    return cart;
   };
   
   
@@ -86,7 +86,7 @@ exports.updateCartItem = async ( { itemId, userId, quantity, selectedAddons, bas
     throw new Error("Unauthorized or item not found");
   }
 
-  const realBasePrice = new Decimal(menu.price); 
+  const realBasePrice = new Decimal(cartItem.menu.price); 
   const selectedBasePrice = new Decimal(basePrice);
 
   if (selectedBasePrice.lessThan(realBasePrice)) {
@@ -118,6 +118,49 @@ exports.updateCartItem = async ( { itemId, userId, quantity, selectedAddons, bas
 } 
 
 
+//for now users will only be able to update the quantity of their cartItem
+exports.updateCartItemQuantity = async (itemId, userId, quantity) => {
+  const cartItem = await prisma.cartItem.findUnique({
+    where: { id: itemId },
+    include: {
+      cart: true,
+    },
+  });
+  
+  if (!cartItem || cartItem.cart.userId !== userId) {
+    throw new Error("Unauthorized or item not found");
+  }
+
+  const unitPrice = cartItem.unitPrice;
+  const totalPrice = unitPrice.times(quantity);
+  
+  return await prisma.cartItem.update({
+    where: {
+      id: itemId
+    },
+    data: {
+      totalPrice: totalPrice
+    }
+  });
+
+  //in case we have to return the full cart instead
+  // const fullCart = await prisma.cart.findUnique({
+  //   where: {
+  //     userId: userId
+  //   },
+  //   include: {
+  //     items: {
+  //       include: {
+  //         menu: true
+  //       }
+  //     }
+  //   }
+  // });
+
+  // return fullCart;
+}
+
+
 exports.deleteCartItem = async ( {userId, itemId }) => {
   const cartItem = await prisma.cartItem.findUnique({
     where: { id: itemId },
@@ -135,15 +178,15 @@ exports.deleteCartItem = async ( {userId, itemId }) => {
 
 
 exports.clearCart = async ( {userId }) => {
-    const cart = await prisma.cart.findUnique({
-      where: { userId },
-      include: { items: true },
-    });
-  
-    if (!cart) throw new Error('Cart not found');
-  
-    await prisma.cartItem.deleteMany({
-      where: { cartId: cart.id },
-    });
-  }
+  const cart = await prisma.cart.findUnique({
+    where: { userId },
+    include: { items: true },
+  });
+
+  if (!cart) throw new Error('Cart not found');
+
+  await prisma.cartItem.deleteMany({
+    where: { cartId: cart.id },
+  });
+}
   
