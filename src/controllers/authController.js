@@ -1,9 +1,10 @@
 const express = require('express')
 const cookieParser = require("cookie-parser");
 const authService = require('../services/authService')
-const saveRefreshToken = require('../utils/saveRefreshToken')
 const jwt = require('jsonwebtoken')
 const EMAIL_TOKEN_SECRET = process.env.EMAIL_TOKEN_SECRET;
+const { PrismaClient } = require('@prisma/client')
+const prisma = new PrismaClient();
 
 const app = express()
 app.use(express.json())
@@ -67,8 +68,8 @@ exports.verifyEmail = async (req, res) => {
         return res.status(200).json({ message: 'Email verified and user created!', data: user });
   
     } catch (err) {
-      console.error(err);
-      return res.status(400).json({ message: 'Invalid or expired token' });
+        console.error(err);
+        return res.status(400).json({ message: 'Invalid or expired token' });
     }
   };
   
@@ -78,6 +79,62 @@ exports.authenticateWithGoogle = async (req, res) => {
 }
 
 
+exports.forgotPassword = async (req, res) => {
+    const { email } = req.body;
+  
+    if (!email) return res.status(400).json({ message: 'Email is required' });
+  
+    try {
+        const user = await prisma.user.findUnique({ where: { email } });
+        if (!user) return res.status(404).json({ message: 'No user with this email' });
+    
+        await authService.sendPasswordResetEmail(user);
+    
+        res.status(200).json({ message: 'Reset password link sent to email' });
+    } catch (err) {
+        console.error('Forgot Password Error:', err.message);
+        res.status(500).json({ message: 'Something went wrong', error: err.message });
+    }
+};
+  
+
+exports.resetPassword = async (req, res) => {
+    const { token } = req.query;
+    const { newPassword } = req.body;
+  
+    if (!token || !newPassword) {
+      return res.status(400).json({ message: 'Token and new password are required' });
+    }
+  
+    try {
+        await authService.resetUserPassword(token, newPassword);
+        res.status(200).json({ message: 'Password has been reset successfully' });
+
+    } catch (err) {
+        console.error('Reset Password Error:', err.message);
+        res.status(400).json({ message: err.message });
+    }
+};
+
+
+exports.changePassword = async (req, res) => {
+    const userId = req.user.id;
+    const { oldPassword, newPassword } = req.body;
+
+    if (!oldPassword || !newPassword) {
+        return res.status(400).json({ message: 'Old and new passwords are required' });
+    }
+
+    try {
+        await authService.changeUserPassword(userId, oldPassword, newPassword);
+        res.json({ message: 'Password changed successfully' });
+    } catch (err) {
+        console.error('Change Password Error:', err.message);
+        res.status(400).json({ message: err.message });
+    }
+};
+
+  
 exports.logoutUser = async (req, res) => {
     try {
         const { refreshToken } = req.cookies;
