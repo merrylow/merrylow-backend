@@ -3,6 +3,13 @@ const { PrismaClient } = require('@prisma/client')
 const prisma = new PrismaClient()
 const generateTokens = require('../utils/generateToken')
 const saveRefreshToken = require('../utils/saveRefreshToken')
+const jwt = require('jsonwebtoken');
+const emailService = require('../services/emailService');
+const { getHtmlEmail } = require('../utils/getHtmlEmail');
+
+const EMAIL_TOKEN_SECRET = process.env.EMAIL_TOKEN_SECRET;
+const EMAIL_TOKEN_EXPIRY = '10m';
+
 
 exports.loginUserService = async (email, password) => {
     try {
@@ -20,9 +27,11 @@ exports.loginUserService = async (email, password) => {
         }
 
         const { accessToken, refreshToken } = generateTokens(user.id, user.role, user.email);
+
         await saveRefreshToken(user.id, refreshToken);
 
         return { accessToken, refreshToken };
+
     } catch (error) {
         console.error('Error during login:', error);
         throw error;
@@ -32,48 +41,77 @@ exports.loginUserService = async (email, password) => {
 
 exports.signupUserService = async (username, email, password, role) => {
     try {
-
-        // try and validate the user's email to make sure its valid and genuine
-
-        // after validation, we can now save the user's details in the database
         const hashedPassword = await bcrypt.hash(password, 10);
-        const newUser = await prisma.user.create({
-            data: {
-                name: username,
-                email,
-                password: hashedPassword,
-                role
-            },
-        });
 
-        return newUser;
+        const emailToken = jwt.sign(
+            { username, email, hashedPassword, role },
+            EMAIL_TOKEN_SECRET,
+            { expiresIn: EMAIL_TOKEN_EXPIRY }
+        );
+
+        const verificationLink = `http://localhost:5000/api/auth/verify?token=${emailToken}`;
+
+        await emailService.sendEmail(
+            email,
+            'Verify your email',
+            `Click the link to verify: ${verificationLink}`,
+            getHtmlEmail(username, verificationLink)
+        );
+          
+
     } catch (error) {
         console.error('Error during signup:', error);
         throw error;
     }
 }
 
+
+exports.createUserAccount = async (email, username, hashedPassword, role ) =>{
+  
+    const existing = await prisma.user.findUnique({ where: { email } });
+
+    if (existing) return res.status(400).json({ message: 'User already exists' });
+
+    const newUser = await prisma.user.create({
+      data: {
+        name: username,
+        email,
+        password: hashedPassword,
+        role
+      }
+    });
+
+    return newUser;
+}
+
+
 exports.removeRefreshToken = async (refreshToken) => {
     try {
-        const updatedUser = await prisma.user.update({
-            where: { refreshToken },
-            data: { refreshToken: null },
-            select: {
-                id: true,
-                username: true,
-                email: true,
-                password: false,
+        const userToUpdate = await prisma.user.findFirst({
+            where: {
+                refreshToken: refreshToken 
             }
         });
 
-        return { success: true, message: 'Refresh token removed successfully', updatedUser };
-    } catch (error) {
-        if (error.code === 'P2025') {
-            // P2025: Record not found in Prisma
-            console.warn('No user found with the given refresh token.');
-            return { success: false, message: 'Refresh token not found' };
+        if (!userToUpdate) {
+            throw new'No user found with that refresh token.' 
         }
 
+        const updatedUser = await prisma.user.update({
+            where: {
+                id: userToUpdate.id
+            },
+            data: {
+                refreshToken: null
+            },
+            select: { 
+                id: true,
+                name: true,
+                email: true,
+            }
+        });
+
+    } catch (error) {
         console.error('Error removing refresh token:', error);
         throw new Error('Failed to remove refresh token');
     }

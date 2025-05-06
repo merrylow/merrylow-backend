@@ -1,19 +1,25 @@
 const express = require('express')
 const cookieParser = require("cookie-parser");
 const authService = require('../services/authService')
-const setRefreshToken = require('../utils/setRefreshToken')
 const saveRefreshToken = require('../utils/saveRefreshToken')
+const jwt = require('jsonwebtoken')
+const EMAIL_TOKEN_SECRET = process.env.EMAIL_TOKEN_SECRET;
 
 const app = express()
 app.use(express.json())
 app.use(cookieParser())
+
 
 exports.loginUser = async (req, res) => {
     try {
         const {email, password} = req.body;
         const {accessToken, refreshToken} = await authService.loginUserService(email, password);
 
-        setRefreshToken(res, refreshToken);
+        res.cookie("refreshToken", refreshToken, {
+            httpOnly: true,
+            secure: true,
+            sameSite: "Strict",
+        });
 
         res.json({accessToken, refreshToken});
     }catch (error) {
@@ -25,38 +31,54 @@ exports.loginUser = async (req, res) => {
     }
 }
 
+
 exports.signupUser = async (req, res) => {
-    const {username, email, password, role} = req.body;
-     // we can also validate the user's email to make sure its valid and genuine
-    if (!username || !email || !password) {
-        return res.status(400).json({message: 'Please fill in all fields'})
-    }
     try {
-        const user = await authService.signupUserService(username, email, password, role);
-        const {accessToken, refreshToken} = await authService.loginUserService(email, password);
-        setRefreshToken(res, refreshToken);
-        await saveRefreshToken(user.id, refreshToken);
-        res.json({accessToken, refreshToken});
+
+        const { username, email, password, role } = req.body;
+
+        if (!username || !email || !password || !role) {
+            return res.status(400).json({ message: 'All fields are required' });
+        }
+        
+        await authService.signupUserService(username, email, password, role);
+
+        res.status(200).json({ message: 'Verification email sent!' });
+
+    } catch (error) {
+        console.error('Error during signup:', error);
+        throw error;
     }
-    catch (error) {
-        if (error.code === 'P2002') {
-            return res.status(400).json({ message: 'User already exists' });
-        }        
-        console.error('Error during login:', error);
-        res.status(500).json({ message: 'Internal server error' });
+};
+
+
+exports.verifyEmail = async (req, res) => {
+    const { token } = req.query;
+  
+    if (!token) return res.status(400).json({ message: 'Token is required' });
+  
+    try {
+        const payload = jwt.verify(token, EMAIL_TOKEN_SECRET);
+    
+        const { email, username, hashedPassword, role } = payload;
+
+        const user = await authService.createUserAccount(email, username, hashedPassword, role);
+  
+        return res.status(200).json({ message: 'Email verified and user created!', data: user });
+  
+    } catch (err) {
+      console.error(err);
+      return res.status(400).json({ message: 'Invalid or expired token' });
     }
-}
+  };
+  
 
 exports.authenticateWithGoogle = async (req, res) => {
     // get the user from google and create a new user in the database if that user details don't already exist else log the user in
 }
 
-exports.authenticateWithFacebook = async (req, res) => {
-    // get the user from facebook and create a new user in the database if that user details don't already exist else log the user in
-}
 
 exports.logoutUser = async (req, res) => {
-//   destroy session; expire the access token; delete the refresh token from the database 
     try {
         const { refreshToken } = req.cookies;
 
@@ -64,7 +86,6 @@ exports.logoutUser = async (req, res) => {
             return res.status(400).json({ message: "No refresh token found" });
         }
 
-        // Delete refresh token from the database
         await authService.removeRefreshToken(refreshToken);
 
         res.clearCookie("refreshToken", {
