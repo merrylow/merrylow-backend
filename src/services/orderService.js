@@ -1,9 +1,10 @@
 const {PrismaClient, Prisma } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-// this logic needs to be changed... since the user will select specific items from the cart before checkout
-//hence we dont have to fetch all the items
-exports.placeOrder = async (userId) => {
+
+exports.placeOrder = async (userId, details, email) => {
+  const { address, notes, paymentMethod, name, phone } = details;
+
   const cart = await prisma.cart.findUnique({
     where: { userId },
     include: {
@@ -13,7 +14,7 @@ exports.placeOrder = async (userId) => {
   });
 
   if (!cart || cart.items.length === 0) {
-    throw new Error("Cart is empty");
+    throw new Error("Your cart is empty.");
   }
 
   const totalPrice = cart.items.reduce(
@@ -25,9 +26,16 @@ exports.placeOrder = async (userId) => {
     data: {
       userId,
       restaurantId: cart.menu.restaurantId,
+      status: paymentMethod === "cod" ? "PLACED" : "PENDING",
+      paymentMethod,
       totalPrice,
+      customerName: name,
+      customerPhone: phone,
+      address,
+      notes,
+
       orderItems: {
-        create: cart.items.map((item) => ({
+        create: cart.items.map(item => ({
           menuId: item.menuId,
           quantity: item.quantity,
           unitPrice: item.unitPrice,
@@ -36,18 +44,51 @@ exports.placeOrder = async (userId) => {
           notes: item.notes,
         })),
       },
+
+      payment: {
+        create: {
+          amount: totalPrice,
+          method: paymentMethod,
+          status: paymentMethod === "cod" ? "PENDING" : "PENDING",
+          // transactionId will be filled later by webhook for paystack
+        }
+      }
     },
     include: {
       orderItems: true,
-    },
+      payment: true
+    }
   });
 
-  await prisma.cartItem.deleteMany({
-    where: { cartId: cart.id },
-  });
-//   after deletion, the frontend can decide to remove those cartItems from the user's cart imediately...
+  await prisma.cart.delete({ where: { userId } });
 
-  return order;
+  if (paymentMethod === "paystack") {
+    const paystackRes = await axios.post(
+      "https://api.paystack.co/transaction/initialize",
+      {
+        email,
+        amount: totalPrice.toNumber() * 100, // Paystack expects amount in kobo / pesewas
+        metadata: { orderId: order.id },
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.PAYSTACK_TEST_SECRET_KEY}`,
+          'Content-Type': 'application/json'
+        },
+      }
+    );
+
+    return {
+      message: "Payment initiated with Paystack",
+      paymentUrl: paystackRes.data.data.authorization_url,
+      orderId: order.id,
+    };
+  }
+
+  return {
+    message: "Order placed with Cash on Delivery",
+    order,
+  };
 };
 
 
@@ -74,4 +115,47 @@ exports.getOrders = async ( userId ) => {
 
     return order;
 }
+
+
+exports.getOrderById = async (orderId, userId) => {
+
+    return await prisma.order.findFirst({
+      where: { id: orderId, userId },
+      include: {
+        orderItems: {
+          include: { menu: true }
+        },
+        restaurant: true,
+        payment: true,
+        delivery: true
+      }
+    });
+};
+
+
+exports.cancelOrder = async (orderId, userId) => {
+  const order = await prisma.order.findFirst({
+    where: { id: orderId, userId },
+  });
+
+  if (!order) {
+    const error = new Error('Order not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  //user won't be able to cancle after certain status... will be modified later
+  if (!['ACCEPTED', 'IN_PROGRESS'].includes(order.status)) {
+    const error = new Error('Order cannot be cancelled at this stage');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const cancelledOrder = await prisma.order.update({
+    where: { id: orderId },
+    data: { status: 'CANCELLED' },
+  });
+
+  return cancelledOrder;
+};
 

@@ -17,14 +17,14 @@ exports.getCartItems = async (req, res) => {
           return res.status(200).json({
             success: true,
             message: 'Your cart is empty',
-            data: [], //the frontend can handle this case when the length of the array is 0
+            data: [],
           });
         }
         
         return res.status(200).json({
           success: true,
           message: 'Cart items retrieved successfully',
-          data: cart, // full cart object with items and metadata
+          data: cart,
         });
         
 
@@ -60,7 +60,7 @@ exports.addToCart = async (req, res) => {
     */
     
     // setting default selected addons because of the next validations
-    const { menuId, quantity, selectedAddons = [], basePrice, notes } = req.body;
+    const { menuId, quantity, selectedAddons = [], basePrice, notes = "" } = req.body;
 
     if (!menuId || !quantity || quantity < 1 || !Array.isArray(selectedAddons)) {
       return res.status(400).json({
@@ -96,7 +96,7 @@ exports.addToCart = async (req, res) => {
 
 exports.updateCartItem = async (req, res) => {
   try {
-    const { itemId } = req.params;
+    const itemId = req.params.id;
     const userId = req.user.id;
     const { quantity, selectedAddons = [], basePrice, notes} = req.body;
 
@@ -126,12 +126,37 @@ exports.updateCartItem = async (req, res) => {
 }
 
 
+exports.updateCartItemQuantity = async (req, res) => {
+  try {
+    const itemId = req.params.id;
+    const userId = req.user.id;
+    const { quantity} = req.body;
+
+    if (quantity && quantity < 1) {
+      return res.status(400).json({ success: false, message: "Quantity must be at least 1" });
+    };
+    
+    const updatedItem = await cartService.updateCartItemQuantity(itemId, userId, quantity );
+
+    return res.status(200).json({
+      success: true,
+      message: "Cart item updated successfully",
+      data: updatedItem,
+    });
+
+  } catch(error){
+    console.error(error);
+    return res.status(500).json({ success: false, message: error.message || "Something went wrong",}); 
+  }
+}
+
+
 exports.deleteFromCart = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { itemId } = req.params;
+    const itemId  = req.params.id;
 
-    await cartService.deleteFromCart(userId, itemId);
+    await cartService.deleteCartItem(userId, itemId);
 
     res.status(200).json({ message: 'Item removed from cart successfully' });
   } catch (err) {

@@ -9,6 +9,8 @@ const restaurantRoute = require('./src/routes/restaurantRoute')
 const productRoute = require('./src/routes/productRoute')
 const vendorRoute = require('./src/routes/vendorRoute')
 const accountRoute = require('./src/routes/accountRoute')
+const cartRoute = require('./src/routes/cartRoute')
+const webhookRoute = require('./src/routes/webhookRoute')
 
 const app = express();
 
@@ -19,14 +21,16 @@ app.use('/api/auth', authRoute);
 app.use('/api/refresh', refreshRoute);
 app.use('/api/users', userRoute);
 app.use('/api/checkout', checkoutRoute);
-app.use('/api/orders', orderRoute);
+app.use('/api/order', orderRoute);
 app.use('/api/restaurant', restaurantRoute)
 app.use('/api/products', productRoute);
 app.use('/api/vendor', vendorRoute);
 app.use('/api/account', accountRoute);
+app.use('/api/cart', cartRoute);
+app.use('/api/webhook', webhookRoute);
 
 app.get('/', (req, res) => {
-    res.send('Welcome to the API!');
+    res.send('Welcome to Merrylow!');
 });
 
 module.exports = app;
