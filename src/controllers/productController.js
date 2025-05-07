@@ -16,11 +16,11 @@ const productService = require('../services/productService');
  */
 exports.getProducts = async (req, res) => {
     try {
-        const productName = req.query.name || '';
+        const productName = req.query.name || null;
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
 
-        const products = await productService.getProducts(productName, page, limit);
+        const products = await productService.getProducts(productName, limit, page);
 
         if (products.length === 0) {
             return res.status(404).json({ message: "No products found" });
