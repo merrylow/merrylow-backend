@@ -47,8 +47,8 @@ exports.addItemToCart = async ({ userId, menuId, quantity, selectedAddons, baseP
   })
 
   if (!cart){
-    const cart = await prisma.cart.create( {
-      where: { userId },
+    cart = await prisma.cart.create( {
+      data: { userId },
     })
   }
 
@@ -139,7 +139,8 @@ exports.updateCartItemQuantity = async (itemId, userId, quantity) => {
       id: itemId
     },
     data: {
-      totalPrice: totalPrice
+      totalPrice: totalPrice,
+      quantity
     }
   });
 
@@ -161,7 +162,7 @@ exports.updateCartItemQuantity = async (itemId, userId, quantity) => {
 }
 
 
-exports.deleteCartItem = async ( {userId, itemId }) => {
+exports.deleteCartItem = async ( userId, itemId ) => {
   const cartItem = await prisma.cartItem.findUnique({
     where: { id: itemId },
     include: { cart: true },
