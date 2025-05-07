@@ -1,33 +1,37 @@
-const { PrismaClient } = require('@prisma/client');
+const { PrismaClient, Prisma  } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 exports.checkout = async (req, res) => {
     const userId = req.user.id;
-    const updatedCartItems = req.body.cartItems; // [{ id, quantity }, ...]
   
     try {
+
+      if (res.body){
+        const updatedCartItems = req.body.cartItems; // [{ id, quantity }, ...]
+
         for (const item of updatedCartItems) {
-            const originalItem = await prisma.cartItem.findUnique({
-                where: { id: item.id },
-                select: { unitPrice: true }
-            });
-            
-            if (!originalItem) continue;
-            
-            await prisma.cartItem.update({
-                where: { id: item.id },
-                data: {
-                    quantity: item.quantity,
-                    totalPrice: originalItem.unitPrice.mul(item.quantity),
-                },
-            });
-        }
+          const originalItem = await prisma.cartItem.findUnique({
+              where: { id: item.id },
+              select: { unitPrice: true }
+          });
           
+          if (!originalItem) continue;
+          
+          await prisma.cartItem.update({
+              where: { id: item.id },
+              data: {
+                  quantity: item.quantity,
+                  totalPrice: originalItem.unitPrice.mul(item.quantity),
+              },
+          });
+        }
+        
+      }
+
       const cart = await prisma.cart.findUnique({
         where: { userId },
         include: {
           items: true,
-          menu: true,
         },
       });
   
