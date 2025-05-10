@@ -6,7 +6,7 @@ const verifyAccessToken = require('../middleware/verifyAccessToken');
 
 authRoute.post('/login', loginUser);
 authRoute.post('/signup', signupUser);
-authRoute.post('/signup/google', authenticateWithGoogle);
+authRoute.post('/google', authenticateWithGoogle);
 authRoute.get('/logout', logoutUser);
 authRoute.get('/verify', verifyEmail);
 authRoute.post('/forgot-password', forgotPassword);

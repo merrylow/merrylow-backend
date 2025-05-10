@@ -21,7 +21,7 @@ model User {
   verificationToken String?
   codeExpiresAt     DateTime?
   campusId          Int?
-  // image      String? // not really needed for now since we're not going to be allowing users to upload photos( we need to minimize costs)
+  imageUrl          String?
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
