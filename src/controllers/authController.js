@@ -6,7 +6,8 @@ const EMAIL_TOKEN_SECRET = process.env.EMAIL_TOKEN_SECRET;
 const { PrismaClient } = require('@prisma/client')
 const prisma = new PrismaClient();
 const verifyGoogleIdToken = require('../utils/verifyGoogleIdToken');
-
+const generateToken = require('../utils/generateToken');
+const {sendError, sendSuccess } = require('../utils/responseHandler')
 const app = express()
 app.use(express.json())
 app.use(cookieParser())
@@ -19,67 +20,63 @@ exports.loginUser = async (req, res) => {
 
         res.cookie("refreshToken", refreshToken, {
             httpOnly: true,
-            secure: true,
+            secure: process.env.NODE_ENV === 'production',
             sameSite: "Strict",
         });
 
-        res.json({accessToken, refreshToken});
+        return sendSuccess(res, 200, { accessToken, refreshToken }, 'Login successful');
     }catch (error) {
         if (error.message === 'User not found' || error.message === 'Invalid password') {
-            return res.status(400).json({ message: 'Invalid User Credentials!' });
+            return sendError(res, 400, 'Invalid User Credentials!');
         }
-        console.error('Error during login:', error);
-        res.status(500).json({ message: 'Internal server error', error });
+        return sendError(res, 500, 'Internal server error', error);
     }
 }
 
 
 exports.signupUser = async (req, res) => {
     try {
-
         const { username, email, password, role } = req.body;
 
         if (!username || !email || !password || !role) {
-            return res.status(400).json({ message: 'All fields are required' });
+            return sendError(res, 400, 'All fields are required');
         }
-        
+
         await authService.signupUserService(username, email, password, role);
 
-        res.status(200).json({ message: 'Verification email sent!' });
+        return sendSuccess(res, 200, {}, 'Verification email sent!');
 
     } catch (error) {
-        console.error('Error during signup:', error);
-        throw error;
+        return sendError(res, 500, 'Signup failed', error);
     }
 };
 
 
 exports.verifyEmail = async (req, res) => {
     const { token } = req.query;
-  
-    if (!token) return res.status(400).json({ message: 'Token is required' });
-  
+
+    if (!token) return sendError(res, 400, 'Token is required');
+
     try {
         const payload = jwt.verify(token, EMAIL_TOKEN_SECRET);
-    
+
         const { email, username, hashedPassword, role } = payload;
 
         const user = await authService.createUserAccount(email, username, hashedPassword, role);
-  
-        return res.status(200).json({ message: 'Email verified and user created!', data: user });
-  
+
+        return sendSuccess(res, 200, { data: user }, 'Email verified and user created!');
+
     } catch (err) {
-        console.error(err);
-        return res.status(400).json({ message: 'Invalid or expired token' });
+        return sendError(res, 400, err.message || 'Invalid or expired token', err);
     }
   };
-  
+
 
 exports.authenticateWithGoogle = async (req, res) => {
     const { idToken } = req.body;
 
     if (!idToken) {
-        return res.status(400).json({ message: 'ID token is required' });
+        return sendError(res, 400, 'ID token is required');
     }
 
     try {
@@ -87,10 +84,16 @@ exports.authenticateWithGoogle = async (req, res) => {
         const { email, name, picture, sub: googleId } = payload;
 
         const user = await authService.findOrCreateUser({ email, name, picture, googleId });
-        const { accessToken, refreshToken } = generateToken(user.id, role="CUSTOMER", email);
+        const { accessToken, refreshToken } = generateToken(user.id, user.role || "CUSTOMER", user.email);
 
-        return res.status(200).json({
-            message: 'Google login successful',
+        res.cookie("refreshToken", refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: "Strict",
+        });
+
+
+        return sendSuccess(res, 200, {
             accessToken,
             refreshToken,
             user: {
@@ -99,11 +102,10 @@ exports.authenticateWithGoogle = async (req, res) => {
                 email: user.email,
                 imageUrl: user.imageUrl,
             },
-        });
+        }, 'Google login successful');
 
     } catch (error) {
-        console.error('Google Auth Error:', error);
-        return res.status(401).json({ message: 'Invalid or expired Google token' });
+        return sendError(res, 401, 'Invalid or expired Google token', error);
     }
 };
 
@@ -111,38 +113,36 @@ exports.authenticateWithGoogle = async (req, res) => {
 
 exports.forgotPassword = async (req, res) => {
     const { email } = req.body;
-  
-    if (!email) return res.status(400).json({ message: 'Email is required' });
-  
+
+    if (!email) return sendError(res, 400, 'Email is required');
+
     try {
         const user = await prisma.user.findUnique({ where: { email } });
-        if (!user) return res.status(404).json({ message: 'No user with this email' });
-    
+        if (!user) return sendError(res, 404, 'No user with this email');
+
         await authService.sendPasswordResetEmail(user);
-    
-        res.status(200).json({ message: 'Reset password link sent to email' });
+
+        return sendSuccess(res, 200, {}, 'Reset password link sent to email');
     } catch (err) {
-        console.error('Forgot Password Error:', err.message);
-        res.status(500).json({ message: 'Something went wrong', error: err.message });
+        return sendError(res, 500, 'Something went wrong', err);
     }
 };
-  
+
 
 exports.resetPassword = async (req, res) => {
     const { token } = req.query;
     const { newPassword } = req.body;
-  
+
     if (!token || !newPassword) {
-      return res.status(400).json({ message: 'Token and new password are required' });
+      return sendError(res, 400, 'Token and new password are required');
     }
-  
+
     try {
         await authService.resetUserPassword(token, newPassword);
-        res.status(200).json({ message: 'Password has been reset successfully' });
+        return sendSuccess(res, 200, {}, 'Password has been reset successfully');
 
     } catch (err) {
-        console.error('Reset Password Error:', err.message);
-        res.status(400).json({ message: err.message });
+        return sendError(res, 400, err.message || 'Invalid or expired token', err);
     }
 };
 
@@ -152,39 +152,38 @@ exports.changePassword = async (req, res) => {
     const { oldPassword, newPassword } = req.body;
 
     if (!oldPassword || !newPassword) {
-        return res.status(400).json({ message: 'Old and new passwords are required' });
+        return sendError(res, 400, 'Old and new passwords are required');
     }
 
     try {
         await authService.changeUserPassword(userId, oldPassword, newPassword);
-        res.json({ message: 'Password changed successfully' });
+        return sendSuccess(res, 200, {}, 'Password changed successfully');
     } catch (err) {
-        console.error('Change Password Error:', err.message);
-        res.status(400).json({ message: err.message });
+        return sendError(res, 400, err.message || 'Failed to change password', err);
     }
 };
 
-  
+
 exports.logoutUser = async (req, res) => {
     try {
         const { refreshToken } = req.cookies;
 
+        res.clearCookie("refreshToken", {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: "Strict",
+        });
+
         if (!refreshToken) {
-            return res.status(400).json({ message: "No refresh token found" });
+            return sendSuccess(res, 200, {}, "No refresh token found, but cookie cleared");
         }
 
         await authService.removeRefreshToken(refreshToken);
 
-        res.clearCookie("refreshToken", {
-            httpOnly: true,
-            secure: true,
-            sameSite: "Strict",
-        });
+        return sendSuccess(res, 200, {}, "Logged out successfully");
 
-        res.json({ message: "Logged out successfully" });
     } catch (error) {
         console.error("Error during logout:", error);
-        res.status(500).json({ message: "Internal server error" });
+        return sendSuccess(res, 200, {}, "Logged out successfully (with server-side issue)");
     }
-    //   res.redirect('/')
 }
