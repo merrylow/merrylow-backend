@@ -101,8 +101,8 @@ exports.createUserAccount = async (email, username, hashedPassword, role ) =>{
   
     const existing = await prisma.user.findUnique({ where: { email } });
 
-    if (existing) return res.status(400).json({ message: 'User already exists' });
-
+    if (existing) throw new Error ('User already exists' )
+        
     const newUser = await prisma.user.create({
       data: {
         name: username,
