@@ -1,19 +1,19 @@
 const restaurantService = require('../services/restaurantService');
+const { sendError, sendSuccess } = require('../utils/responseHandler');
 
 
 exports.getRestaurants = async (req, res) => {
     try {
         const restaurants = await restaurantService.getRestaurants();
-        
+
         if (!restaurants || restaurants.length === 0) {
-            return res.status(404).json({ success: false, message: 'No restaurants found' });
+            return sendError(res, 404, 'No restaurants found');
         }
 
-        res.status(200).json({ success: true, data: restaurants });
+        return sendSuccess(res, 200, { data: restaurants });
 
     } catch (error) {
-        console.error('Error fetching restaurants:', error);
-        res.status(500).json({ success: false, message: 'Server Error', error: error.message });
+        return sendError(res, 500, 'Server Error', error);
     }
 };
 
@@ -25,13 +25,12 @@ exports.getRestaurantById = async (req, res) => {
         const restaurant = await restaurantService.getRestaurantById(id);
 
         if (!restaurant) {
-            return res.status(404).json({ success: false, message: 'Restaurant not found' });
+            return sendError(res, 404, 'Restaurant not found');
         }
 
-        res.status(200).json({ success: true, data: restaurant });
+        return sendSuccess(res, 200, { data: restaurant });
 
     } catch (error) {
-        console.error(`Error fetching restaurant ${id}:`, error);
-        res.status(500).json({ success: false, message: 'Server Error', error: error.message });
+        return sendError(res, 500, 'Server Error', error);
     }
 };
