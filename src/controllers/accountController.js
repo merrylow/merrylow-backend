@@ -1,4 +1,5 @@
 const accountService = require('../services/accountService');
+const { sendError, sendSuccess } = require('../utils/responseHandler');
 
 
 exports.getUserAccount = async (req, res) => {
@@ -7,17 +8,13 @@ exports.getUserAccount = async (req, res) => {
         const user = await accountService.getAccount(userId);
 
         if (!user) {
-                return res.status(404).json({
-                    success: false,
-                    message: 'User not found'
-                });
+            return sendError(res, 404, 'User not found');
         }
 
-        return res.status(200).json({success: true, user});
+        return sendSuccess(res, 200, { user });
 
-    } catch (error){
-        console.error(`Error fetching user!`, error);
-        res.status(500).json({ success: false, message: 'Server Error', error: error.message });
+    } catch (error) {
+        return sendError(res, 500, 'Server Error', error);
     }
 }
 
@@ -31,14 +28,10 @@ exports.updateUserAccount = async (req, res) => {
 
         const updatedUser = await accountService.updateAccount(userId, data);
 
-        return res.status(200).json({
-            success: true,
-            user: updatedUser
-        });
+        return sendSuccess(res, 200, { user: updatedUser });
 
     } catch (error) {
-        console.error('Update Account Error:', error);
-        res.status(500).json({ success: false, message: 'Failed to update account' });
+        return sendError(res, 500, 'Failed to update account', error);
     }
 }
 
@@ -49,14 +42,14 @@ exports.changePassword = async (req, res) => {
         const { currentPassword, newPassword } = req.body;
 
         if (!currentPassword || !newPassword) {
-            return res.status(400).json({ message: 'Both current and new password are required' });
+            return sendError(res, 400, 'Both current and new password are required');
         }
 
         await accountService.changePassword(userId, currentPassword, newPassword);
 
-        res.status(200).json({ success: true, message: 'Password updated successfully' });
+        return sendSuccess(res, 200, {}, 'Password updated successfully');
 
     } catch (error) {
-        res.status(400).json({ success: false, message: error.message });
+        return sendError(res, 400, error.message, error);
     }
 }
