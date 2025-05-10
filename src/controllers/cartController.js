@@ -1,72 +1,55 @@
 const cartService = require('../services/cartService');
+const { sendError, sendSuccess } = require('../utils/responseHandler');
+
 
 exports.getCartItems = async (req, res) => {
     try {
         const user = req.user;
 
         if (!user || !user.id) {
-            return res.status(401).json({
-                success: false,
-                message: 'Unauthorized: User not found in request',
-            });
+            return sendError(res, 401, 'Unauthorized: User not found in request');
         }
 
         const cart = await cartService.getCartItemsByUser(user.id);
 
         if (!cart || !cart.items || cart.items.length === 0) {
-          return res.status(200).json({
-            success: true,
-            message: 'Your cart is empty',
-            data: [],
-          });
+          return sendSuccess(res, 200, { data: [] }, 'Your cart is empty');
         }
-        
-        return res.status(200).json({
-          success: true,
-          message: 'Cart items retrieved successfully',
-          data: cart,
-        });
-        
+
+        return sendSuccess(res, 200, { data: cart }, 'Cart items retrieved successfully');
+
 
     } catch (error) {
-        console.error('Error getting cart items:', error);
-        return res.status(500).json({
-            success: false,
-            message: 'An unexpected error occurred while retrieving cart items',
-            error: process.env.NODE_ENV === 'development' ? error.message : undefined,
-        });
+        return sendError(res, 500, 'An unexpected error occurred while retrieving cart items', error);
     }
 };
 
 
 exports.addToCart = async (req, res) => {
   try {
-    const user = req.user;    
+    const user = req.user;
     /* selectedAddons: [
       {
-        name: "egg",         // Must match one of the addon names in the menu.addOns array
-        quantity: 2          // Optional. Required for quantity-based addons (e.g., eggs)
+        name: "egg", 		 // Must match one of the addon names in the menu.addOns array
+        quantity: 2 		 // Optional. Required for quantity-based addons (e.g., eggs)
       },
       {
         name: "extra rice",
-        customPrice: 15      // Optional. Required for range-based addons (e.g., extra rice)
+        customPrice: 15 	 // Optional. Required for range-based addons (e.g., extra rice)
       }
     ]
-    
+
     Notes:
     - Only provide one of: `quantity` or `customPrice`
     - `customPrice` must be >= base addon price
     - The backend will handle validation and pricing. Do NOT calculate totals on frontend
     */
-    
+
     // setting default selected addons because of the next validations
     const { menuId, quantity, selectedAddons = [], basePrice, notes = "" } = req.body;
 
     if (!menuId || !quantity || quantity < 1 || !Array.isArray(selectedAddons)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid input: menuId, quantity, and selectedAddons are required',
-      });
+      return sendError(res, 400, 'Invalid input: menuId, quantity, and selectedAddons are required');
     }
 
     const item = await cartService.addItemToCart( {
@@ -78,104 +61,84 @@ exports.addToCart = async (req, res) => {
       notes,
     });
 
-    return res.status(201).json( {
-      success: true,
-      message: "Item added to cart",
-      data: item,
-    });
+    return sendSuccess(res, 201, { data: item }, "Item added to cart");
 
   } catch (error) {
-    console.error('[addToCart ERROR]', error.message);
-    return res.status(500).json({
-      success: false,
-      message: error.message || 'Server error',
-    });
+    return sendError(res, 500, error.message || 'Server error', error);
   }
 }
 
 
 exports.updateCartItem = async (req, res) => {
-  try {
-    const itemId = req.params.id;
-    const userId = req.user.id;
-    const { quantity, selectedAddons = [], basePrice, notes} = req.body;
+    try {
+        const itemId = req.params.id;
+        const userId = req.user.id;
+        const { quantity, selectedAddons = [], basePrice, notes} = req.body;
 
-    if (quantity && quantity < 1) {
-      return res.status(400).json({ success: false, message: "Quantity must be at least 1" });
-    };
-    
-    const updatedItem = await cartService.updateCartItem({
-      itemId,
-      userId,
-      quantity,
-      selectedAddons,
-      notes,
-    });
+        if (!quantity || quantity < 1) { 
+            return sendError(res, 400, "Quantity must be at least 1");
+        }
 
-    return res.status(200).json({
-      success: true,
-      message: "Cart item updated successfully",
-      data: updatedItem,
-    });
+        const updatedItem = await cartService.updateCartItem({
+            itemId,
+            userId,
+            quantity,
+            selectedAddons,
+            notes,
+        });
 
-  } catch(error){
-    console.error(error);
-    return res.status(500).json({ success: false, message: error.message || "Something went wrong",}); 
-  }
+        return sendSuccess(res, 200, { data: updatedItem }, "Cart item updated successfully");
+
+    } catch(error){
+        return sendError(res, 500, error.message || "Something went wrong", error);
+    }
 
 }
 
 
 exports.updateCartItemQuantity = async (req, res) => {
-  try {
-    const itemId = req.params.id;
-    const userId = req.user.id;
-    const { quantity} = req.body;
+    try {
+        const itemId = req.params.id;
+        const userId = req.user.id;
+        const { quantity} = req.body;
 
-    if (quantity && quantity < 1) {
-      return res.status(400).json({ success: false, message: "Quantity must be at least 1" });
-    };
-    
-    const updatedItem = await cartService.updateCartItemQuantity(itemId, userId, quantity );
+        if (!quantity || quantity < 1) {
+            return sendError(res, 400, "Quantity must be at least 1");
+        }
 
-    return res.status(200).json({
-      success: true,
-      message: "Cart item updated successfully",
-      data: updatedItem,
-    });
+        const updatedItem = await cartService.updateCartItemQuantity(itemId, userId, quantity );
 
-  } catch(error){
-    console.error(error);
-    return res.status(500).json({ success: false, message: error.message || "Something went wrong",}); 
-  }
+        return sendSuccess(res, 200, { data: updatedItem }, "Cart item updated successfully");
+
+    } catch(error){
+        return sendError(res, 500, error.message || "Something went wrong", error);
+    }
 }
 
 
 exports.deleteFromCart = async (req, res) => {
-  try {
-    const userId = req.user.id;
-    const itemId  = req.params.id;
+    try {
+        const userId = req.user.id;
+        const itemId  = req.params.id;
 
-    await cartService.deleteCartItem(userId, itemId);
+        await cartService.deleteCartItem(userId, itemId);
 
-    res.status(200).json({ message: 'Item removed from cart successfully' });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to remove item from cart' });
-  }
+        return sendSuccess(res, 200, {}, 'Item removed from cart successfully');
+    } catch (err) {
+        return sendError(res, 500, 'Failed to remove item from cart', err);
+    }
 };
 
 
 exports.deleteAllCartItems = async (req, res) => {
-  try {
-    const userId = req.user.id;
+    try {
+        const userId = req.user.id;
 
-    await cartService.clearCart(userId);
+        await cartService.clearCart(userId);
 
-    res.status(200).json({ message: 'Cart cleared successfully' });
-    
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to clear cart' });
-  }
+        return sendSuccess(res, 200, {}, 'Cart cleared successfully');
+
+    } catch (err) {
+        return sendError(res, 500, 'Failed to clear cart', err);
+    }
 }
