@@ -1,12 +1,13 @@
-const generateTokens = require('../utils/generateToken')
+const generateTokens = require('../utils/generateToken');
+const { sendError, sendSuccess } = require('../utils/responseHandler');
 
 const refreshToken =  async ( req, res) => {
-    const user = req.user; 
+    const user = req.user;
     if (!user) {
-        return res.status(403).json({ message: "Invalid refresh token" });
+        return sendError(res, 403, "Invalid refresh token");
     }
     const {accessToken} = generateTokens(user.id, user.userRole, user.email);
-    return res.status(200).json({accessToken});
+    return sendSuccess(res, 200, {accessToken});
 }
 
 module.exports = refreshToken;

@@ -1,18 +1,19 @@
 const productService = require('../services/productService');
+const { sendError, sendSuccess } = require('../utils/responseHandler');
 
 /**
  * @desc Fetch paginated products, optionally filtered by name
  * @route GET /products
  * @queryParams
- *   - name (optional): Filter products by name (partial match, case-insensitive)
- *   - page (optional): Page number for pagination (default: 1)
- *   - limit (optional): Number of items per page (default: 10)
+ * - name (optional): Filter products by name (partial match, case-insensitive)
+ * - page (optional): Page number for pagination (default: 1)
+ * - limit (optional): Number of items per page (default: 10)
  *@overload
-    *   - name: (optional) - if provided, filters products by name else returns all products
-    * @example /products
-    * 
+ * - name: (optional) - if provided, filters products by name else returns all products
+ * @example /products
+ *
  * @example
- *   /products?name=burger&page=2&limit=5
+ * /products?name=burger&page=2&limit=5
  */
 exports.getProducts = async (req, res) => {
     try {
@@ -22,19 +23,18 @@ exports.getProducts = async (req, res) => {
 
         const products = await productService.getProducts(productName, limit, page);
 
-        if (products.length === 0) {
-            return res.status(404).json({ message: "No products found" });
+        if (!products || products.length === 0) { 
+            return sendError(res, 404, "No products found");
         }
 
-        res.status(200).json({
+        return sendSuccess(res, 200, {
             page,
             limit,
             products
         });
 
     } catch (error) {
-        console.error("Product Fetch Error:", error);
-        res.status(500).json({ message: "Error fetching products" });
+        return sendError(res, 500, "Error fetching products", error);
     }
 }
 
@@ -44,18 +44,20 @@ exports.getProducts = async (req, res) => {
  * @route GET /products/:id
  *
  * @example
- *   /products/abc123
+ * /products/abc123
  */
 exports.getProductById = async (req, res) => {
     try {
         const productId = req.params.id;
         const product = await productService.getProductById(productId);
+
         if (!product) {
-            return res.status(404).json({ message: "Product not found" });
+            return sendError(res, 404, "Product not found");
         }
-        res.status(200).json(product);
+
+        return sendSuccess(res, 200, data);
+
     } catch (error) {
-        console.error("Product Fetch by ID Error:", error);
-        res.status(500).json({ message: "Error fetching product" });
+        return sendError(res, 500, "Error fetching product", error);
     }
 }

@@ -1,22 +1,19 @@
 const vendorService = require('../services/vendorService');
-
-// make sure the role of the user is vendor before allowing access to these routes
-//  later modify the generate accessTOken to include the user roles as well
+const { sendError, sendSuccess } = require('../utils/responseHandler');
 
 
 exports.getVendorRestaurant = async (req, res) => {
     try {
         const { id, userRole } = req.user;
-        if (userRole !== 'VENDOR') return res.status(403).json({ message: 'Forbidden' });
+        if (userRole !== 'VENDOR') return sendError(res, 403, 'Forbidden');
 
         const restaurants = await vendorService.getRestaurants(id);
 
-        if (!restaurants.length) return res.status(404).json({ message: 'No restaurants found' });
+        if (!restaurants || !restaurants.length) return sendError(res, 404, 'No restaurants found');
 
-        return res.status(200).json(restaurants);
+        return sendSuccess(res, 200, restaurants);
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: 'Internal server error' });
+        return sendError(res, 500, 'Internal server error', err);
     }
 };
 
@@ -27,21 +24,20 @@ exports.getVendorRestaurantById = async (req, res) => {
         const restaurantId = req.params.id
 
         if (!userRole || userRole !== "VENDOR") {
-            return res.status(403).json({ message: 'Forbidden' });
+            return sendError(res, 403, 'Forbidden');
         }
 
-        if (!restaurantId) return res.status(400).json({ message: 'Restaurant ID is required' });
+        if (!restaurantId) return sendError(res, 400, 'Restaurant ID is required');
 
         const restaurant = await vendorService.getRestaurantById(id, restaurantId);
         if (!restaurant) {
-            return res.status(404).json({ success: false, message: 'Restaurant not found' });
+            return sendError(res, 404, 'Restaurant not found');
         }
 
-        res.status(200).json({ success: true, data: restaurant });
+        return sendSuccess(res, 200, { data: restaurant });
 
-    } catch (error ){
-        console.error(`Error fetching restaurant ${id}:`, error);
-        res.status(500).json({ success: false, message: 'Server Error', error: error.message });
+    } catch (error) {
+        return sendError(res, 500, 'Server Error', error);
     }
 }
 
@@ -50,7 +46,7 @@ exports.getVendorProducts = async (req, res) => {
     try {
         const { id, userRole } = req.user;
         if (!userRole || userRole !== "VENDOR") {
-            return res.status(403).json({ message: 'Forbidden' });
+            return sendError(res, 403, 'Forbidden');
         }
 
         const restaurantId = req.query?.restaurantId;
@@ -58,17 +54,16 @@ exports.getVendorProducts = async (req, res) => {
         const products = await vendorService.getProducts(id, restaurantId);
 
         if (!products || products.length === 0) {
-            return res.status(404).json({ message: 'No products found for this vendor' });
+            return sendError(res, 404, 'No products found for this vendor');
         }
 
-        res.status(200).json(products);
+        return sendSuccess(res, 200, products);
     } catch (err) {
         const message = err.message === "Unauthorized access to restaurant"
             ? "You do not own the specified restaurant"
             : "Internal server error";
 
-        console.error(err);
-        res.status(500).json({ message });
+        return sendError(res, 500, message, err);
     }
 };
 
@@ -77,7 +72,7 @@ exports.getVendorProductById = async (req, res) => {
     try {
         const { id, userRole } = req.user;
         if (!userRole || userRole !== "VENDOR") {
-            return res.status(403).json({ message: 'Forbidden' });
+            return sendError(res, 403, 'Forbidden');
         }
 
         const restaurantId = req.query?.restaurantId;
@@ -86,12 +81,11 @@ exports.getVendorProductById = async (req, res) => {
 
         const product = await vendorService.getProductById(id, restaurantId, productId);
         if (!product) {
-            return res.status(404).json({ message: "Product not found" });
+            return sendError(res, 404, "Product not found");
         }
-        res.status(200).json(product);
+        return sendSuccess(res, 200, product);
     } catch (error) {
-        console.error("Product Fetch by ID Error:", error);
-        res.status(500).json({ success: false, message: 'Server Error', error: error.message });
+        return sendError(res, 500, 'Server Error', error);
 
     }
 }
@@ -102,15 +96,13 @@ exports.addVendorRestaurant = async (req, res) => {
         const { id, userRole } = req.user;
 
         if (userRole !== "VENDOR") {
-            return res.status(403).json({ message: "Forbidden" });
+            return sendError(res, 403, "Forbidden");
         }
 
         const { name, phone, campusId, location, startTime, endTime } = req.body;
 
         if (!name || !phone || !campusId || !location || !startTime || !endTime) {
-            return res.status(400).json({
-                message: "Missing required fields: name, phone, campusId, location, startTime, and endTime are required.",
-            });
+            return sendError(res, 400, "Missing required fields: name, phone, campusId, location, startTime, and endTime are required.");
         }
 
         const newRestaurant = await vendorService.addRestaurant({
@@ -123,14 +115,10 @@ exports.addVendorRestaurant = async (req, res) => {
             ownerId: id,
         });
 
-        return res.status(201).json({
-            message: "Restaurant submitted for approval.",
-            restaurant: newRestaurant,
-        });
+        return sendSuccess(res, 201, { restaurant: newRestaurant }, "Restaurant submitted for approval.");
 
     } catch (err) {
-        console.error(err);
-        return res.status(500).json({ message: "Internal server error" });
+        return sendError(res, 500, "Internal server error", err);
     }
 };
 
@@ -138,21 +126,20 @@ exports.addVendorRestaurant = async (req, res) => {
 exports.updateVendorRestaurant = async (req, res) => {
     try {
         const {id, userRole} = req.user;
-        if (!userRole || userRole !== "VENDOR") return res.status(403).json({ message: 'Forbidden' });
-        
+        if (!userRole || userRole !== "VENDOR") return sendError(res, 403, 'Forbidden');
+
         const restaurantId = req.params.id;
-        if (!restaurantId ) return res.status(400).json({ message: 'Restaurant ID is required' });
+        if (!restaurantId ) return sendError(res, 400, 'Restaurant ID is required');
 
         const updatedRestaurant = await vendorService.updateRestaurant(id, restaurantId, req.body);
         if (!updatedRestaurant) {
-            return res.status(404).json({ message: 'Restaurant not found' });
+            return sendError(res, 404, 'Restaurant not found or unauthorized');
         }
 
-        return res.status(200).json(updatedRestaurant);
+        return sendSuccess(res, 200, updatedRestaurant);
 
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: 'Internal server error' });
+        return sendError(res, 500, 'Internal server error', err);
     }
 }
 
@@ -164,14 +151,14 @@ exports.addVendorProduct = async (req, res) => {
 
         const { id, userRole } = req.user;
         if (userRole !== "VENDOR") {
-            return res.status(403).json({ message: 'Forbidden' });
+            return sendError(res, 403, 'Forbidden');
         }
 
         // to add product we need; name, price, description?, category(will include that later to the DB), restaurantId, addOns?
         const { name, price, restaurantId, description, addOns } = req.body;
 
-        if (!name || !price || !restaurantId) {
-            return res.status(400).json({ message: 'name, price, and restaurantId are required' });
+        if (!name || price === undefined || price === null || !restaurantId) { // Added price check
+            return sendError(res, 400, 'name, price, and restaurantId are required');
         }
 
         // NOTE: Add image validation later
@@ -185,11 +172,10 @@ exports.addVendorProduct = async (req, res) => {
             addOns,
         });
 
-        return res.status(201).json(newProduct);
+        return sendSuccess(res, 201, newProduct);
 
     } catch (err) {
-        console.error(err.message || err);
-        return res.status(500).json({ message: err.message || 'Internal server error' });
+        return sendError(res, 500, err.message || 'Internal server error', err);
     }
 };
 
@@ -198,7 +184,7 @@ exports.updateVendorProduct = async (req, res) => {
     try {
         const { id, userRole } = req.user;
         if (userRole !== "VENDOR") {
-            return res.status(403).json({ message: 'Forbidden' });
+            return sendError(res, 403, 'Forbidden');
         }
 
         // to update a product we might need any of these; name?, price?, description?, category?(will include that later to the DB), restaurantId, addOns?, available?
@@ -206,25 +192,24 @@ exports.updateVendorProduct = async (req, res) => {
 
         const productId = req.params.id;
         if (!productId) {
-            return res.status(400).json({ message: 'Product ID is required' });
+            return sendError(res, 400, 'Product ID is required');
         }
 
-        const { restaurantId } = req.body;
+        const { restaurantId } = req.body; 
         if (!restaurantId) {
-            return res.status(400).json({ message: 'Restaurant ID is required' });
+            return sendError(res, 400, 'Restaurant ID is required');
         }
 
         // NOTE: Image update handling will come later
         const updatedProduct = await vendorService.updateProduct(id, productId, req.body);
         if (!updatedProduct) {
-            return res.status(404).json({ message: 'Product not found or unauthorized' });
+            return sendError(res, 404, 'Product not found or unauthorized');
         }
 
-        return res.status(200).json(updatedProduct);
+        return sendSuccess(res, 200, updatedProduct);
 
     } catch (err) {
-        console.error(err.message || err);
-        return res.status(500).json({ message: err.message || 'Internal server error' });
+        return sendError(res, 500, err.message || 'Internal server error', err);
     }
 };
 
@@ -235,18 +220,18 @@ exports.deleteVendorProduct = async (req, res) => {
         const productId = req.params.id;
 
         const restaurantId = req.query?.restaurantId;
-        if (!restaurantId) return res.status(400).json({ message: 'Restaurant ID is required' });
+        if (!restaurantId) return sendError(res, 400, 'Restaurant ID is required');
 
         if (!userRole || userRole !== "VENDOR") {
-            return res.status(403).json({ message: 'Forbidden' });
+            return sendError(res, 403, 'Forbidden');
         }
 
         const deletedProduct = await vendorService.deleteProduct(id, restaurantId, productId);
-        return res.status(200).json({ deletedProduct });
+
+        return sendSuccess(res, 200, { deletedProduct }, 'Product deleted successfully');
 
     } catch (err) {
-        console.error(err.message || err);
-        return res.status(500).json({ message: err.message || 'Internal server error' });
+        return sendError(res, 500, err.message || 'Internal server error', err);
     }
 };
 
@@ -257,19 +242,23 @@ exports.deleteVendorRestaurant = async (req, res) => {
         const restaurantId = req.params.id;
 
         if (!restaurantId) {
-            return res.status(400).json({ message: 'Restaurant ID is required' });
+            return sendError(res, 400, 'Restaurant ID is required');
         }
 
         if (!userRole || userRole !== "VENDOR") {
-            return res.status(403).json({ message: 'Forbidden' });
+            return sendError(res, 403, 'Forbidden');
         }
 
+        // Service should handle cases where restaurant not found or unauthorized
         const deletedRestaurant = await vendorService.deleteRestaurant(id, restaurantId);
-        return res.status(200).json({ deletedRestaurant });
+         // If service throws error on not found/unauthorized, catch block handles it.
+         // If service returns null/undefined for not found, add check here before sending 200?
+         // Assuming service throws errors on failure.
+
+        return sendSuccess(res, 200, { deletedRestaurant }, 'Restaurant deleted successfully'); // Added success message
 
     } catch (err) {
-        console.error(err.message || err);
-        return res.status(500).json({ message: err.message || 'Internal server error' });
+        return sendError(res, 500, err.message || 'Internal server error', err);
     }
 };
 
@@ -279,60 +268,60 @@ exports.getVendorOrders = async (req, res) => {
     const userRole  = req.user.userRole;
 
     if (userRole !== "VENDOR") {
-        return res.status(403).json({ message: "Forbidden" });
+        return sendError(res, 403, "Forbidden");
     }
 
     const { status } = req.query;
-  
     try {
         const orders = await vendorService.fetchVendorOrders(vendorId, status);
-        res.json({ orders });
+
+        return sendSuccess(res, 200, { orders });
+
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: "Failed to fetch vendor orders" });
+        return sendError(res, 500, "Failed to fetch vendor orders", err);
     }
 };
-  
+
 
 exports.getVendorOrderById = async (req, res) => {
     const vendorId = req.user.id;
-    const { id } = req.params;
-  
+    const { id } = req.params; 
+
     try {
-        order = await vendorService.fetchVendorOrderById(id, vendorId);
-  
+        let order = await vendorService.fetchVendorOrderById(id, vendorId); 
+
         if (!order) {
-            return res.status(404).json({ message: "Order not found or unauthorized" });
+            return sendError(res, 404, "Order not found or unauthorized");
         }
-  
-        res.json({ order });
+
+        return sendSuccess(res, 200, { order }); 
+
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: "Failed to fetch order details" });
+        return sendError(res, 500, "Failed to fetch order details", err);
     }
 };
-  
+
 
 exports.patchVendorOrderStatus = async (req, res) => {
     const vendorId = req.user.id;
-    const { id } = req.params;
+    const { id } = req.params; 
     const { status } = req.body;
-  
+
     const validStatuses = ["PENDING", "IN_PROGRESS", "COMPLETED", "CANCELLED", "DECLINED", "ACCEPTED"];
-    if (!validStatuses.includes(status)) {
-        return res.status(400).json({ message: "Invalid status value" });
+    if (!status || !validStatuses.includes(status)) {
+        return sendError(res, 400, "Invalid status value");
     }
-  
+
     try {
         const updated = await vendorService.updateOrderStatus(id, vendorId, status);
-    
+
         if (!updated) {
-            return res.status(404).json({ message: "Order not found or unauthorized" });
+            return sendError(res, 404, "Order not found or unauthorized");
         }
-    
-        res.json({ message: "Order status updated", order: updated });
+
+        return sendSuccess(res, 200, { order: updated }, "Order status updated");
+
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: "Failed to update order status" });
+        return sendError(res, 500, err.message || "Failed to update order status", err);
     }
 };

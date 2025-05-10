@@ -1,5 +1,6 @@
 const { PrismaClient} = require('@prisma/client');
 const prisma = new PrismaClient();
+const { sendError, sendSuccess } = require('../utils/responseHandler');
 
 
 exports.getCurrentUser = async (req, res) => {
@@ -18,22 +19,12 @@ exports.getCurrentUser = async (req, res) => {
         });
 
         if (!user) {
-            return res.status(404).json({
-                success: false,
-                message: 'User not found'
-            });
+            return sendError(res, 404, 'User not found');
         }
 
-        res.status(200).json({
-            success: true,
-            user
-        });
+        return sendSuccess(res, 200, { user });
 
     } catch (error) {
-        console.error('Error getting current user:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Failed to get current user'
-        });
+        return sendError(res, 500, 'Failed to get current user', error);
     }
 }
