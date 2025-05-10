@@ -25,7 +25,7 @@ exports.getOrderById = async (req, res) => {
     // later add validation for orderId
 
     try {
-        const order = await orderService.getOrderById(userId, orderId); // Added await here
+        const order = await orderService.getOrderById(userId, orderId); 
 
         if (!order) {
             return sendError(res, 404, 'Order not found');
