@@ -1,27 +1,19 @@
 const orderService = require('../services/orderService');
+const { sendError, sendSuccess } = require('../utils/responseHandler');
 
 exports.getAllOrders = async (req, res) => {
     const userId = req.user.id;
     try {
         const orders = await orderService.getOrders(userId);
-        
-        if (!orders  || orders.orderItems.length === 0){
-            return res.status(200).json({
-                success: true,
-                message: 'Your have not made any orders yet',
-                data: [],
-              });       
+
+        if (!orders || !orders.orderItems || orders.orderItems.length === 0) {
+            return sendSuccess(res, 200, { data: [] }, 'You have not made any orders yet');
         }
 
-        res.status(200).json({ data : orders});
+        return sendSuccess(res, 200, { data : orders});
 
     } catch(err){
-        console.error("Error getting orders", err);
-        return res.status(500).json({
-            success: false,
-            message: 'An unexpected error occurred while retrieving order items',
-            error: process.env.NODE_ENV === 'development' ? error.message : undefined,
-        });    
+        return sendError(res, 500, 'An unexpected error occurred while retrieving order items', err);
     }
 }
 
@@ -29,43 +21,40 @@ exports.getAllOrders = async (req, res) => {
 exports.getOrderById = async (req, res) => {
     const userId = req.user.id;
     const orderId = parseInt(req.params.orderId);
-  
+
+    // later add validation for orderId
+
     try {
-        const order = orderService.getOrderById(userId, orderId);
-  
-    if (!order) {
-        return res.status(404).json({ message: 'Order not found' });
-    }
-  
-    res.status(200).json({ order });
+        const order = await orderService.getOrderById(userId, orderId); // Added await here
+
+        if (!order) {
+            return sendError(res, 404, 'Order not found');
+        }
+
+        return sendSuccess(res, 200, { order });
 
     } catch (err) {
-      res.status(500).json({ error: 'Something went wrong' });
+        return sendError(res, 500, 'Something went wrong', err);
     }
 };
-  
+
 
 exports.placeOrder = async (req, res) => {
     const userId = req.user.id;
     const email = req.user.email;
     const { name, address, phone, notes, paymentMethod } = req.body;
 
+    // Add input validation for name, address, phone, paymentMethod here
+
     try {
         const result = await orderService.placeOrder(userId, {
-            name, address, phone, notes, paymentMethod },
-            email);
+                name, address, phone, notes, paymentMethod },
+                email);
 
-        res.status(201).json({
-            success: true,
-            ...result,
-        });
+        return sendSuccess(res, 201, { ...result });
 
     } catch (err) {
-        console.error("Order Placement Error:", err);
-        res.status(500).json({
-        success: false,
-        message: err.message || "Something went wrong while placing the order",
-        });
+        return sendError(res, 500, err.message || "Something went wrong while placing the order", err);
     }
 };
 
@@ -74,11 +63,12 @@ exports.cancelOrder = async (req, res) => {
     const userId = req.user.id;
     const orderId = parseInt(req.params.orderId);
 
+    // Add validation for orderId
     try {
         const result = await orderService.cancelOrder(orderId, userId);
-        res.status(200).json({ message: 'Order cancelled', order: result });
+        return sendSuccess(res, 200, { order: result }, 'Order cancelled');
     } catch (error) {
         const statusCode = error.statusCode || 500;
-        res.status(statusCode).json({ error: error.message || 'Internal Server Error' });
+        return sendError(res, statusCode, error.message || 'Internal Server Error', error);
     }
 };
