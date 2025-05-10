@@ -7,6 +7,8 @@ const jwt = require('jsonwebtoken');
 const emailService = require('../services/emailService');
 const { getHtmlEmail } = require('../utils/getHtmlEmail');
 const { getPasswordResetHtml } = require('../utils/getPasswordResetHtml')
+const { OAuth2Client } = require('google-auth-library');
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const EMAIL_TOKEN_SECRET = process.env.EMAIL_TOKEN_SECRET;
 const EMAIL_TOKEN_EXPIRY = '10m';
@@ -65,6 +67,34 @@ exports.signupUserService = async (username, email, password, role) => {
         throw error;
     }
 }
+
+
+exports.verifyGoogleIdToken = async (idToken) => {
+    const ticket = await client.verifyIdToken({
+        idToken,
+        audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    return ticket.getPayload(); 
+};
+
+
+exports.findOrCreateUser = async ({ email, name, picture, googleId }) => {
+    let user = await prisma.user.findUnique({ where: { email } });
+
+    if (!user) {
+        user = await prisma.user.create({
+            data: {
+                name,
+                email,
+                imageUrl : picture,
+                providerId : googleId,
+            },
+        });
+    }
+
+    return user;
+};
 
 
 exports.createUserAccount = async (email, username, hashedPassword, role ) =>{

@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken')
 const EMAIL_TOKEN_SECRET = process.env.EMAIL_TOKEN_SECRET;
 const { PrismaClient } = require('@prisma/client')
 const prisma = new PrismaClient();
+const verifyGoogleIdToken = require('../utils/verifyGoogleIdToken');
 
 const app = express()
 app.use(express.json())
@@ -75,8 +76,37 @@ exports.verifyEmail = async (req, res) => {
   
 
 exports.authenticateWithGoogle = async (req, res) => {
-    // get the user from google and create a new user in the database if that user details don't already exist else log the user in
-}
+    const { idToken } = req.body;
+
+    if (!idToken) {
+        return res.status(400).json({ message: 'ID token is required' });
+    }
+
+    try {
+        const payload = await verifyGoogleIdToken(idToken);
+        const { email, name, picture, sub: googleId } = payload;
+
+        const user = await authService.findOrCreateUser({ email, name, picture, googleId });
+        const { accessToken, refreshToken } = generateToken(user.id, role="CUSTOMER", email);
+
+        return res.status(200).json({
+            message: 'Google login successful',
+            accessToken,
+            refreshToken,
+            user: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                imageUrl: user.imageUrl,
+            },
+        });
+
+    } catch (error) {
+        console.error('Google Auth Error:', error);
+        return res.status(401).json({ message: 'Invalid or expired Google token' });
+    }
+};
+
 
 
 exports.forgotPassword = async (req, res) => {
