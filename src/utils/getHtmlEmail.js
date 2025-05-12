@@ -104,7 +104,7 @@ function getHtmlEmail(username, verificationLink) {
           </div>
           
           <div class="content">
-            <h1>Welcome, ${capitalizedUsername || there}!</h1>
+            <h1>Welcome, ${capitalizedUsername || "there"}!</h1>
             
             <p>We're thrilled you're joining us. Just one quick step to verify your email and unlock everything.</p>
             
