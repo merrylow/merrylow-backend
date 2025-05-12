@@ -1,11 +1,11 @@
-function getHtmlEmail(username, verificationLink) {
+function getLoginEmail(username, loginLink) {
     const capitalizedUsername = username.charAt(0).toUpperCase() + username.slice(1);
     return `
       <!DOCTYPE html>
       <html>
       <head>
         <meta charset="UTF-8">
-        <title>Verify Your Email</title>
+        <title>Your Login Link</title>
         <style>
           body {
             margin: 0;
@@ -69,7 +69,7 @@ function getHtmlEmail(username, verificationLink) {
             font-size: 17px;
             box-shadow: 0 4px 10px rgba(255, 45, 117, 0.3);
           }
-          .verification-link {
+          .login-link {
             color: #cb6ce6 !important;
             font-size: 14px;
             background-color: #1a1a1a;
@@ -104,18 +104,18 @@ function getHtmlEmail(username, verificationLink) {
           </div>
           
           <div class="content">
-            <h1>Welcome, ${capitalizedUsername || there}!</h1>
+            <h1>Welcome back, ${capitalizedUsername || 'there'}!</h1>
             
-            <p>We're thrilled you're joining us. Just one quick step to verify your email and unlock everything.</p>
+            <p>We've received a request to log in to your MerryLow account. Click the button below to securely access your account.</p>
             
             <div class="button-container">
-              <a href="${verificationLink}" class="button">Verify Email Now</a>
+              <a href="${loginLink}" class="button">Login to Your Account</a>
             </div>
 
-            <p>If you're having trouble viewing the button above, <a href="${verificationLink}" class="verification-link">please click this link instead</a></p>
+            <p>If you're having trouble viewing the button above, <a href="${loginLink}" class="login-link">please click this link instead</a></p>
 
             <div class="disclaimer">
-              <p>Not you? Ignore this email. Link expires in 24 hours.</p>
+              <p>For your security, this link will expire in 15 minutes. If you didn't request this login, please ignore this email.</p>
             </div>
           </div>
           
@@ -125,12 +125,12 @@ function getHtmlEmail(username, verificationLink) {
               <a href="#" class="social-icon">Twitter</a>
               <a href="#" class="social-icon">Facebook</a>
             </div>
-            <p class="final" >© 2025 MerryLow · University of Ghana, Legon</p>
+            <p class="final">© 2025 MerryLow · University of Ghana, Legon</p>
           </div>
         </div>
       </body>
       </html>
     `;
 }
-  
-module.exports = { getHtmlEmail };
+
+module.exports = { getLoginEmail };

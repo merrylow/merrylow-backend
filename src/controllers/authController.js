@@ -3,6 +3,7 @@ const cookieParser = require("cookie-parser");
 const authService = require('../services/authService')
 const jwt = require('jsonwebtoken')
 const EMAIL_TOKEN_SECRET = process.env.EMAIL_TOKEN_SECRET;
+const homepage = process.env.FRONTEND_HOMEPAGE
 const { PrismaClient } = require('@prisma/client')
 const prisma = new PrismaClient();
 const verifyGoogleIdToken = require('../utils/verifyGoogleIdToken');
@@ -38,8 +39,12 @@ exports.signupUser = async (req, res) => {
     try {
         const { username, email, password, role } = req.body;
 
-        if (!username || !email || !password || !role) {
+        if ( !email || !password || !role) {
             return sendError(res, 400, 'All fields are required');
+        }
+
+        if (!username) {
+            username = email?.split("@")[0];
         }
 
         await authService.signupUserService(username, email, password, role);
@@ -51,6 +56,48 @@ exports.signupUser = async (req, res) => {
     }
 };
 
+
+exports.signUpWithEmail = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return sendError(res, 400, 'Email is required');
+        }
+
+        const username = email?.split("@")[0];
+
+        await authService.signupUserService(username, email, password = null, role = "CUSTOMER");
+
+        return sendSuccess(res, 200, {}, 'Verification email sent!');
+
+    } catch (error) {
+        return sendError(res, 500, 'Signup failed', error);
+    }
+}
+
+
+exports.loginWithEmail = async (req, res) => {
+    try {
+        const {email} = req.body;
+        
+        const username = email?.split("@")[0];
+
+        if (!username || !email) {
+            return sendError(res, 400, 'Email is required');
+        }
+
+        await authService.loginWithEmailService(email);
+
+        return sendSuccess(res, 200, {}, 'Login Verification email sent!');
+
+    }catch (error) {
+        if (error.message === 'User not found' || error.message === 'Invalid password') {
+            return sendError(res, 400, 'Invalid User Credentials!');
+        }
+        return sendError(res, 500, 'Internal server error', error);
+    }
+}
 
 exports.verifyEmail = async (req, res) => {
     const { token } = req.query;
@@ -64,14 +111,45 @@ exports.verifyEmail = async (req, res) => {
 
         const user = await authService.createUserAccount(email, username, hashedPassword, role);
 
-        return sendSuccess(res, 200, { data: user }, 'Email verified and user created!');
+        const { accessToken, refreshToken } = generateToken(user.id, user.role, user.email);
+
+        res.cookie("refreshToken", refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: "Strict",
+        });
+
+        res.redirect(`${homepage}?accessToken=${accessToken}`);
 
     } catch (err) {
         return sendError(res, 400, err.message || 'Invalid or expired token', err);
     }
-  };
+};
 
+exports.verifyEmailForLogin = async (req, res) => {
+    const { token } = req.query;
 
+    if (!token) return sendError(res, 400, 'Token is required');
+
+    try {
+        const payload = jwt.verify(token, EMAIL_TOKEN_SECRET);
+
+        const { id, role, email } = payload;
+
+        const { accessToken, refreshToken } = generateToken(id, role, email);
+
+        res.cookie("refreshToken", refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: "Strict",
+        });
+
+        res.redirect(`${homepage}?accessToken=${accessToken}`);
+
+    } catch (err) {
+        return sendError(res, 400, err.message || 'Invalid or expired token', err);
+    }
+}
 exports.authenticateWithGoogle = async (req, res) => {
     const { idToken } = req.body;
 

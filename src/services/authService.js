@@ -6,6 +6,7 @@ const saveRefreshToken = require('../utils/saveRefreshToken')
 const jwt = require('jsonwebtoken');
 const emailService = require('../services/emailService');
 const { getHtmlEmail } = require('../utils/getHtmlEmail');
+const { getLoginEmail } = require('../utils/getLoginHtmlEmail');
 const { getPasswordResetHtml } = require('../utils/getPasswordResetHtml')
 const { OAuth2Client } = require('google-auth-library');
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -42,9 +43,12 @@ exports.loginUserService = async (email, password) => {
 }
 
 
-exports.signupUserService = async (username, email, password, role) => {
+exports.signupUserService = async (username, email, password, role = "CUSTOMER") => {
     try {
-        const hashedPassword = await bcrypt.hash(password, 10);
+        let hashedPassword = null;
+        if (password){
+            hashedPassword = await bcrypt.hash(password, 10);
+        }
 
         const emailToken = jwt.sign(
             { username, email, hashedPassword, role },
@@ -61,13 +65,47 @@ exports.signupUserService = async (username, email, password, role) => {
             getHtmlEmail(username, verificationLink)
         );
           
-
     } catch (error) {
         console.error('Error during signup:', error);
         throw error;
     }
 }
 
+exports.loginWithEmailService = async (email) => {
+    try {
+        const user = await prisma.user.findUnique({
+            where: { email },
+            select: {
+                id: true,
+                role: true,
+                email: true
+            },
+        });
+
+        if (!user) {
+            throw new Error('User not found');
+        }
+
+        const emailToken = jwt.sign(
+            { id: user.id, role: user.role, email },            
+            EMAIL_TOKEN_SECRET,
+            { expiresIn: '15m' }
+        );
+
+        const loginLink = `http://localhost:5000/api/auth/verify/login/?token=${emailToken}`;
+
+        await emailService.sendEmail(
+            email,
+            'Login',
+            `Click the link to login: ${loginLink}`,
+            getLoginEmail(user.name, loginLink)
+        );
+
+    } catch(error){
+        console.error('Error during login:', error);
+        throw error;
+    }
+}
 
 exports.verifyGoogleIdToken = async (idToken) => {
     const ticket = await client.verifyIdToken({
