@@ -154,11 +154,15 @@ exports.authenticateWithGoogle = async (req, res) => {
     const { idToken } = req.body;
 
     if (!idToken) {
+        console.log("no token from google")
         return sendError(res, 400, 'ID token is required');
     }
 
     try {
         const payload = await verifyGoogleIdToken(idToken);
+        if (! payload) {
+            console.log("No payload extracted after verification");
+        }
         const { email, name, picture, sub: googleId } = payload;
 
         const user = await authService.findOrCreateUser({ email, name, picture, googleId });
