@@ -1,4 +1,4 @@
-function getLoginEmail(username, loginLink) {
+function getLoginEmail(username = "there", loginLink) {
     const capitalizedUsername = username.charAt(0).toUpperCase() + username.slice(1);
     return `
       <!DOCTYPE html>

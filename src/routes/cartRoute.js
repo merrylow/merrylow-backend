@@ -6,8 +6,8 @@ const {getCartItems, addToCart, deleteFromCart, updateCartItem, deleteAllCartIte
 cartRoute.get('/', verifyAccessToken, getCartItems); 
 cartRoute.post('/', verifyAccessToken, addToCart);
 cartRoute.put('/item/:id', verifyAccessToken, updateCartItem); 
-cartRoute.patch('/item/:id', verifyAccessToken, updateCartItemQuantity )   
+cartRoute.patch('/item/:id', verifyAccessToken, updateCartItemQuantity ); 
 cartRoute.delete('/item/:id', verifyAccessToken, deleteFromCart);
-cartRoute.delete('/', verifyAccessToken, deleteAllCartItems)
+cartRoute.delete('/', verifyAccessToken, deleteAllCartItems);
 
 module.exports = cartRoute;

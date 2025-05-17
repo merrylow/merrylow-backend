@@ -11,6 +11,7 @@ const { getPasswordResetHtml } = require('../utils/getPasswordResetHtml')
 const { OAuth2Client } = require('google-auth-library');
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
+const backend_url = process.env.BACKEND_URL
 const EMAIL_TOKEN_SECRET = process.env.EMAIL_TOKEN_SECRET;
 const EMAIL_TOKEN_EXPIRY = '10m';
 
@@ -56,7 +57,7 @@ exports.signupUserService = async (username, email, password, role = "CUSTOMER")
             { expiresIn: EMAIL_TOKEN_EXPIRY }
         );
 
-        const verificationLink = `http://localhost:5000/api/auth/verify?token=${emailToken}`;
+        const verificationLink = `${backend_url}api/auth/verify?token=${emailToken}`;
 
         await emailService.sendEmail(
             email,
@@ -92,7 +93,7 @@ exports.loginWithEmailService = async (email) => {
             { expiresIn: '15m' }
         );
 
-        const loginLink = `http://localhost:5000/api/auth/verify/login/?token=${emailToken}`;
+        const loginLink = `${backend_url}/auth/verify/login/?token=${emailToken}`;
 
         await emailService.sendEmail(
             email,
