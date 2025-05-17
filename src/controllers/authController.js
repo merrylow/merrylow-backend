@@ -155,6 +155,7 @@ exports.authenticateWithGoogle = async (req, res) => {
 
     if (!idToken) {
         console.log("no token from google")
+        console.error("no token from google")
         return sendError(res, 400, 'ID token is required');
     }
 
@@ -162,6 +163,7 @@ exports.authenticateWithGoogle = async (req, res) => {
         const payload = await verifyGoogleIdToken(idToken);
         if (! payload) {
             console.log("No payload extracted after verification");
+            console.error("No payload extracted after verification");
         }
         const { email, name, picture, sub: googleId } = payload;
 
