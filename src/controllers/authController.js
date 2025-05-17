@@ -151,6 +151,8 @@ exports.verifyEmailForLogin = async (req, res) => {
     }
 }
 exports.authenticateWithGoogle = async (req, res) => {
+    console.log('Request received at /auth/google');
+
     const { idToken } = req.body;
 
     if (!idToken) {
