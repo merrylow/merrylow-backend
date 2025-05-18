@@ -153,16 +153,16 @@ exports.verifyEmailForLogin = async (req, res) => {
 exports.authenticateWithGoogle = async (req, res) => {
     console.log('Request received at /auth/google');
 
-    const { idToken } = req.body;
+    const { token } = req.body;
 
-    if (!idToken) {
+    if (!token) {
         console.log("no token from google")
         console.error("no token from google")
         return sendError(res, 400, 'ID token is required');
     }
 
     try {
-        const payload = await verifyGoogleIdToken(idToken);
+        const payload = await verifyGoogleIdToken(token);
         if (! payload) {
             console.log("No payload extracted after verification");
             console.error("No payload extracted after verification");
