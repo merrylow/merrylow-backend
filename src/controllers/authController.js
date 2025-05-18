@@ -153,7 +153,7 @@ exports.verifyEmailForLogin = async (req, res) => {
 exports.authenticateWithGoogle = async (req, res) => {
     console.log('Request received at /auth/google');
 
-    const { token } = req.body;
+    const { token } = req.body.code;
 
     if (!token) {
         console.log("no token from google")
