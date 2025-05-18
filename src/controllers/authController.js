@@ -150,10 +150,13 @@ exports.verifyEmailForLogin = async (req, res) => {
         return sendError(res, 400, err.message || 'Invalid or expired token', err);
     }
 }
+
+
 exports.authenticateWithGoogle = async (req, res) => {
     console.log('Request received at /auth/google');
 
-    const { token } = req.body.code;
+    const { token } = req.body;
+    console.log(token);
 
     if (!token) {
         console.log("no token from google")
