@@ -11,9 +11,11 @@ const vendorRoute = require('./src/routes/vendorRoute')
 const accountRoute = require('./src/routes/accountRoute')
 const cartRoute = require('./src/routes/cartRoute')
 const webhookRoute = require('./src/routes/webhookRoute')
+const cors = require('cors');
 
 const app = express();
 
+app.use(cors());
 app.use(express.json());
 app.use(cookieParser());
 
