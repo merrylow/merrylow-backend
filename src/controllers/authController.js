@@ -43,11 +43,7 @@ exports.signupUser = async (req, res) => {
             return sendError(res, 400, 'All fields are required');
         }
 
-        if (!username) {
-            username = email?.split("@")[0];
-        }
-
-        await authService.signupUserService(username, email, password, role);
+        await authService.signupUserService(username, email, password);
 
         return sendSuccess(res, 200, {}, 'Verification email sent!');
 
