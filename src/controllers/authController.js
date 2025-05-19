@@ -108,25 +108,17 @@ exports.verifyEmail = async (req, res) => {
 
         const user = await authService.createUserAccount(email, username, hashedPassword, role);
 
-        const { accessToken, refreshToken } = generateToken(user.id, user.role, user.email);
+        if (!user) {
+            // create a static site to tell the user, there was an error while creating the account
+        }
 
-        res.cookie("refreshToken", refreshToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "Strict",
-            maxAge: 7 * 24 * 60 * 60 * 1000,
-        });
+        // const { accessToken, refreshToken } = generateToken(user.id, user.role, user.email);
 
-        // res.cookie("tempAccessToken", accessToken, {
-        // httpOnly: false,
-        // secure: process.env.NODE_ENV === "production",
-        // sameSite: "Strict",
-        // maxAge: 60 * 1000, // 1 minute (just enough time for frontend to grab it)
-        // });
-
+        //create a static site and redirect the use there instead, telling the user to go to their account and login.
         res.redirect(`${frontendUrl}/verify-success`);
 
     } catch (err) {
+        //instead of sending error... send a static site instead!
         return sendError(res, 400, err.message || 'Invalid or expired token', err);
     }
 };
