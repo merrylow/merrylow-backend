@@ -37,9 +37,9 @@ exports.loginUser = async (req, res) => {
 
 exports.signupUser = async (req, res) => {
     try {
-        const { username, email, password, role } = req.body;
+        const { username, email, password} = req.body;
 
-        if ( !email || !password || !role) {
+        if ( !email || !password || !username) {
             return sendError(res, 400, 'All fields are required');
         }
 
@@ -99,6 +99,7 @@ exports.loginWithEmail = async (req, res) => {
     }
 }
 
+
 exports.verifyEmail = async (req, res) => {
     const { token } = req.query;
 
@@ -115,16 +116,25 @@ exports.verifyEmail = async (req, res) => {
 
         res.cookie("refreshToken", refreshToken, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
+            secure: process.env.NODE_ENV === "production",
             sameSite: "Strict",
+            maxAge: 7 * 24 * 60 * 60 * 1000,
         });
 
-        res.redirect(`${homepage}?accessToken=${accessToken}`);
+        // res.cookie("tempAccessToken", accessToken, {
+        // httpOnly: false,
+        // secure: process.env.NODE_ENV === "production",
+        // sameSite: "Strict",
+        // maxAge: 60 * 1000, // 1 minute (just enough time for frontend to grab it)
+        // });
+
+        res.redirect(`${frontendUrl}/verify-success`);
 
     } catch (err) {
         return sendError(res, 400, err.message || 'Invalid or expired token', err);
     }
 };
+
 
 exports.verifyEmailForLogin = async (req, res) => {
     const { token } = req.query;
