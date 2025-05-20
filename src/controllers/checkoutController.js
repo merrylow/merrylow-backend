@@ -33,8 +33,7 @@ exports.checkout = async (req, res) => {
       const cart = await prisma.cart.findUnique({
         where: { userId },
         include: {
-          items: true, 
-          menu: true,
+          items: true,
         },
       });
 

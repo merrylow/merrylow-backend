@@ -1,5 +1,12 @@
 const {PrismaClient, Prisma } = require('@prisma/client');
 const prisma = new PrismaClient();
+const getUserOrderConfirmationEmail = require('../utils/getUserOrderConfirmationEmail');
+const getUserOrderCompletionEmail = require('../utils/getUserOrderCompletionEmail');
+const getAdminOrderConfirmationEmail = require('../utils/getAdminOrderConfirmationEmail');
+const getAdminOrderCancellationEmail = require('../utils/getAdminOrderCancellationEmail');
+const emailService = require('../services/emailService');
+const adminEmails = process.env.ADMIN_EMAILS?.split(',') || [];
+const axios = require('axios');
 
 
 exports.placeOrder = async (userId, details, email) => {
@@ -8,8 +15,15 @@ exports.placeOrder = async (userId, details, email) => {
   const cart = await prisma.cart.findUnique({
     where: { userId },
     include: {
-      items: true,
-      menu: true,
+      items: {
+        include: {
+          menu: {
+            include: {
+              restaurant: true
+            }
+          }
+        }
+      }
     },
   });
 
@@ -25,18 +39,17 @@ exports.placeOrder = async (userId, details, email) => {
   const order = await prisma.order.create({
     data: {
       userId,
-      restaurantId: cart.menu.restaurantId,
-      status: paymentMethod === "cod" ? "PLACED" : "PENDING",
+      status: paymentMethod === "CASH_ON_DELIVERY" ? "PLACED" : "PENDING",
       paymentMethod,
       totalPrice,
       customerName: name,
       customerPhone: phone,
       address,
       notes,
-
       orderItems: {
         create: cart.items.map(item => ({
           menuId: item.menuId,
+          restaurantId: item.menu.restaurantId,
           quantity: item.quantity,
           unitPrice: item.unitPrice,
           totalPrice: item.totalPrice,
@@ -44,25 +57,19 @@ exports.placeOrder = async (userId, details, email) => {
           notes: item.notes,
         })),
       },
-
       payment: {
         create: {
           amount: totalPrice,
           method: paymentMethod,
-          status: paymentMethod === "cod" ? "PENDING" : "PENDING",
-          // transactionId will be filled later by webhook for paystack
+          status: paymentMethod === "CASH_ON_DELIVERY" ? "PENDING" : "PENDING",
         }
       }
     },
-    include: {
-      orderItems: true,
-      payment: true
-    }
   });
 
-  await prisma.cart.delete({ where: { userId } });
+  // await prisma.cart.delete({ where: { id : cart.id } });
 
-  if (paymentMethod === "paystack") {
+  if (paymentMethod === "paystack" || paymentMethod==="MOBILE_MONEY") {
     const paystackRes = await axios.post(
       "https://api.paystack.co/transaction/initialize",
       {
@@ -83,6 +90,113 @@ exports.placeOrder = async (userId, details, email) => {
       paymentUrl: paystackRes.data.data.authorization_url,
       orderId: order.id,
     };
+  }
+
+  //if the payment detials is cash on delivery then we send the user and admins email about the order
+  const populatedOrder = await prisma.order.findUnique({
+    where: { id: order.id },
+    include: {
+      orderItems: {
+        include: {
+          menu: true,
+          restaurant: true,
+        },
+      },
+      user: {
+        select: {
+          email: true,
+          name: true,
+        },
+      },
+    },
+  });
+
+  if (!populatedOrder) {
+    throw new Error("Failed to retrieve order details");
+  }
+
+  const formatPrice = (price) => {
+    return new Intl.NumberFormat('en-GH', {
+      style: 'currency',
+      currency: 'GHS',
+    }).format(Number(price));
+  };
+
+  const formatDate = (date) => {
+    return new Date(date).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+  };
+
+  const paymentMethodMap = {
+    MOBILE_MONEY: 'Mobile Money',
+    CARD: 'Bank Card',
+    CASH_ON_DELIVERY: 'Cash on Delivery',
+  };
+
+  const products = populatedOrder.orderItems.map(item => {
+    let descriptionDetails = '';
+    try {
+      const descriptionObj = JSON.parse(item.description);
+      descriptionDetails = Object.entries(descriptionObj)
+        .map(([key, value]) => `${key} - ${value}`)
+        .join(' - ');
+    } catch {
+      descriptionDetails = item.description;
+    }
+
+    return {
+      name: `${item.menu.name}${descriptionDetails ? ` - ${descriptionDetails}` : ''}`,
+      vendorName: item.restaurant.name,
+      vendorLink: `https://app.merrylow.com/api/vendors/${item.restaurant.id}`,
+      quantity: item.quantity,
+      price: formatPrice(item.totalPrice),
+    };
+  });
+
+  const emailData = {
+    customerName: populatedOrder.customerName,
+    orderId: populatedOrder.id,
+    orderDate: formatDate(populatedOrder.createdAt),
+    products,
+    subtotal: formatPrice(populatedOrder.totalPrice),
+    shipping: "Free delivery", // in case something is added to shipping... then total wihh increase by this amount
+    total: formatPrice(populatedOrder.totalPrice),
+    paymentMethod: paymentMethodMap[populatedOrder.paymentMethod] || populatedOrder.paymentMethod,
+    serviceType: "Campus Delivery", // Update with actual service type if available
+    serviceDate: formatDate(populatedOrder.createdAt),
+    serviceTime: "", // Add actual service time if available
+    billingName: populatedOrder.customerName,
+    billingAddress: populatedOrder.address.replace(/\\n/g, '\n'),
+    billingPhone: populatedOrder.customerPhone,
+    billingEmail: populatedOrder.user?.email || 'no-email@example.com',
+  };
+
+  await emailService.sendEmail(
+    emailData.billingEmail,
+    'Order Confirmation',
+    `Your order (#${emailData.orderId}) has been confirmed!`,
+    getUserOrderConfirmationEmail(emailData)
+  );
+
+  const adminEmailData = {
+    ...emailData,
+    serviceType: "Home Delivery",
+    serviceTime: "",
+  };
+
+  // Send admin notifications
+  if (adminEmails.length > 0) {
+    console.log(adminEmails)
+    await emailService.sendAdminEmail(
+      'ziglacity@gmail.com', // change this to the Main merrylow account which everyone has access to...
+      adminEmails, // All admins will be BCC'd
+      `New Order: #${adminEmailData.orderId}`,
+      `New order notification for #${adminEmailData.orderId}`,
+      getAdminOrderConfirmationEmail(adminEmailData),
+    );
   }
 
   return {
