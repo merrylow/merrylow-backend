@@ -61,7 +61,7 @@ exports.placeOrder = async (req, res) => {
 
 exports.cancelOrder = async (req, res) => {
     const userId = req.user.id;
-    const orderId = parseInt(req.params.orderId);
+    const orderId = req.params.orderId;
 
     // Add validation for orderId
     try {
