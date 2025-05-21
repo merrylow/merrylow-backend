@@ -38,7 +38,7 @@ app.use('/api/cart', cartRoute);
 app.use('/api/webhook', webhookRoute);
 
 app.get('/', (req, res) => {
-    res.send('Welcome to Merrylow!');
+    res.send('Hi, welcome to Merrylow!');
 });
 
 module.exports = app;
