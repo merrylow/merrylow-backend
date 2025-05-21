@@ -20,7 +20,7 @@ jobs:
 
     - name: Deploy via SSH
       run: |
-        ssh -o StrictHostKeyChecking=no root@YOUR_SERVER_IP << 'EOF'
+        ssh -o StrictHostKeyChecking=no root@162.241.87.232 << 'EOF'
           cd /var/www/merrylow/backend/merrylow-backend
           git pull origin master
           npm install
