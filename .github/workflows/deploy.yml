@@ -1,0 +1,28 @@
+name: Deploy Backend to Server
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Setup SSH
+      uses: webfactory/ssh-agent@v0.7.0
+      with:
+        ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
+
+    - name: Deploy via SSH
+      run: |
+        ssh -o StrictHostKeyChecking=no root@YOUR_SERVER_IP << 'EOF'
+          cd /var/www/merrylow/backend/merrylow-backend
+          git pull origin master
+          npm install
+          pm2 restart merrylow-backend || pm2 start npm --name merrylow-backend -- start
+        EOF
