@@ -26,3 +26,5 @@ jobs:
           npm install
           pm2 restart merrylow-backend || pm2 start npm --name merrylow-backend -- start
         EOF
+
+        
