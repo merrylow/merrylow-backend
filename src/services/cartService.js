@@ -21,8 +21,8 @@ exports.getCartItemsByUser = async (userId) => {
   };
   
   
-exports.addItemToCart = async ({ userId, menuId, quantity, selectedAddons, basePrice, notes }) => {
-  const menu = await prisma.menu.findUnique( { where: {id: menuId}});
+exports.addItemToCart = async ({ userId, productId, quantity, selectedAddons, basePrice, notes }) => {
+  const menu = await prisma.menu.findUnique( { where: {id: productId}});
 
   // the frontend should make sure that menus or items that are not available should not have the add to cart features so that we don't waste resources processing that data
   if(!menu || !menu.available)  throw new Error("Menu item not found or unavailable");
@@ -52,11 +52,11 @@ exports.addItemToCart = async ({ userId, menuId, quantity, selectedAddons, baseP
     })
   }
 
-  // to prevent duplicate cart item, i'll work on merging the the items based on the menuId and description, but for now this is standard
+  // to prevent duplicate cart item, i'll work on merging the the items based on the productId and description, but for now this is standard
   const newCartItem = await prisma.cartItem.create({
     data: {
       cartId: cart.id,
-      menuId,
+      productId,
       quantity,
       unitPrice: unitPrice.toDecimalPlaces(2),
       totalPrice: totalPrice.toDecimalPlaces(2),

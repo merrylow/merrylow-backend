@@ -46,15 +46,15 @@ exports.addToCart = async (req, res) => {
     */
 
     // setting default selected addons because of the next validations
-    const { menuId, quantity, selectedAddons = [], basePrice, notes = "" } = req.body;
+    const { productId, quantity, selectedAddons = [], basePrice, notes = "" } = req.body;
 
-    if (!menuId || !quantity || quantity < 1 || !Array.isArray(selectedAddons)) {
-      return sendError(res, 400, 'Invalid input: menuId, quantity, and selectedAddons are required');
+    if (!productId || !quantity || quantity < 1 || !Array.isArray(selectedAddons)) {
+      return sendError(res, 400, 'Invalid input: productId, quantity, and selectedAddons are required');
     }
 
     const item = await cartService.addItemToCart( {
       userId: user.id,
-      menuId,
+      productId,
       quantity,
       selectedAddons,
       basePrice,
