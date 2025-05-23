@@ -23,7 +23,7 @@ exports.checkout = async (req, res) => {
               where: { id: item.id },
               data: {
                   quantity: item.quantity,
-                  totalPrice: originalItem.unitPrice.mul(item.quantity), // Assuming unitPrice is a Decimal type
+                  totalPrice: originalItem.unitPrice.mul(item.quantity),
               },
           });
         }

@@ -67,7 +67,7 @@ exports.placeOrder = async (userId, details, email) => {
     },
   });
 
-  // await prisma.cart.delete({ where: { id : cart.id } });
+  await prisma.cart.delete({ where: { id : cart.id } });
 
   if (paymentMethod === "paystack" || paymentMethod==="MOBILE_MONEY") {
     const paystackRes = await axios.post(
