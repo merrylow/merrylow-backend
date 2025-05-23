@@ -123,7 +123,7 @@ model Cart {
 model CartItem {
   id          String   @id @default(uuid())
   cartId      String
-  menuId      String
+  productId   String
   quantity    Int      @default(1)
   unitPrice   Decimal  @db.Decimal(10, 2) // total of all included options per unit
   totalPrice  Decimal  @db.Decimal(10, 2) // quantity * unitPrice
@@ -132,7 +132,7 @@ model CartItem {
   createdAt   DateTime @default(now())
 
   cart Cart @relation(fields: [cartId], references: [id])
-  menu Menu @relation(fields: [menuId], references: [id])
+  menu Menu @relation(fields: [productId], references: [id])
 }
 
 model Order {
@@ -170,7 +170,7 @@ model OrderItem {
   id           String  @id @default(uuid())
   orderId      String
   restaurantId String
-  menuId       String
+  productId    String
   quantity     Int
   unitPrice    Decimal @db.Decimal(10, 2)
   totalPrice   Decimal @db.Decimal(10, 2)
@@ -178,7 +178,7 @@ model OrderItem {
   notes        String?
 
   order      Order      @relation(fields: [orderId], references: [id])
-  menu       Menu       @relation(fields: [menuId], references: [id])
+  menu       Menu       @relation(fields: [productId], references: [id])
   restaurant Restaurant @relation(fields: [restaurantId], references: [id])
 
   @@map("orderItems")
