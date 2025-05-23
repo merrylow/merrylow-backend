@@ -6,7 +6,6 @@ function processSelectedAddons(selectedAddons, originalAddons) {
   let addonsTotal = new Decimal(0);
   const description = {};
   const menuAddOns = flattenAddOns(originalAddons);
-  console.log(menuAddOns);
 
   for (const selected of selectedAddons) {
     const found = menuAddOns.find(addon => addon.name === selected.name);
@@ -44,7 +43,6 @@ function processSelectedAddons(selectedAddons, originalAddons) {
       addonPrice = addonBasePrice;
       description[selected.name] = Number(addonBasePrice)
     }
-    console.log(description);
     addonsTotal = addonsTotal.plus(addonPrice);
   }
 
