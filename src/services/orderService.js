@@ -48,7 +48,7 @@ exports.placeOrder = async (userId, details, email) => {
       notes,
       orderItems: {
         create: cart.items.map(item => ({
-          menuId: item.menuId,
+          productId: item.productId,
           restaurantId: item.menu.restaurantId,
           quantity: item.quantity,
           unitPrice: item.unitPrice,

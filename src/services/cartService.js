@@ -42,7 +42,7 @@ exports.addItemToCart = async ({ userId, productId, quantity, selectedAddons, ba
   const totalPrice = unitPrice.times(quantity);
 
   // create cart if it doesnt exist
-  const cart = await prisma.cart.findUnique( {
+  let cart = await prisma.cart.findUnique( {
     where: { userId },
   })
 
@@ -66,10 +66,7 @@ exports.addItemToCart = async ({ userId, productId, quantity, selectedAddons, ba
   });
 
 
-  return {
-    message: 'Item added to cart successfully',
-    data: newCartItem,
-  }; 
+  return newCartItem;
 }
 
 

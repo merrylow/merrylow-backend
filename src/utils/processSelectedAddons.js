@@ -1,9 +1,12 @@
 const Decimal = require("decimal.js");
+const flattenAddOns = require('../utils/flatternAddons')
 
 // since each addons could be in different forms like, quantity, customPrice but can be slided and changed within a range or custom, we need to process and calcualte the prices differently
-function processSelectedAddons(selectedAddons, menuAddOns) {
+function processSelectedAddons(selectedAddons, originalAddons) {
   let addonsTotal = new Decimal(0);
   const description = {};
+  const menuAddOns = flattenAddOns(originalAddons);
+  console.log(menuAddOns);
 
   for (const selected of selectedAddons) {
     const found = menuAddOns.find(addon => addon.name === selected.name);
@@ -39,12 +42,9 @@ function processSelectedAddons(selectedAddons, menuAddOns) {
 
     } else {
       addonPrice = addonBasePrice;
-      description[selected.name] = {
-        type: "fixed",
-        price: Number(addonBasePrice)
-      };
+      description[selected.name] = Number(addonBasePrice)
     }
-
+    console.log(description);
     addonsTotal = addonsTotal.plus(addonPrice);
   }
 

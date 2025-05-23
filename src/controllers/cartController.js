@@ -61,7 +61,7 @@ exports.addToCart = async (req, res) => {
       notes,
     });
 
-    return sendSuccess(res, 201, { data: item }, "Item added to cart");
+    return sendSuccess(res, 201, { data: item }, "Item added to cart successfully");
 
   } catch (error) {
     return sendError(res, 500, error.message || 'Server error', error);
