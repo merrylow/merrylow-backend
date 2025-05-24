@@ -9,6 +9,8 @@ const prisma = new PrismaClient();
 const verifyGoogleIdToken = require('../utils/verifyGoogleIdToken');
 const generateToken = require('../utils/generateToken');
 const {sendError, sendSuccess } = require('../utils/responseHandler')
+const path = require('path');
+const fs = require('fs');
 const app = express()
 app.use(express.json())
 app.use(cookieParser())
@@ -99,27 +101,34 @@ exports.loginWithEmail = async (req, res) => {
 exports.verifyEmail = async (req, res) => {
     const { token } = req.query;
 
-    if (!token) return sendError(res, 400, 'Token is required');
+    if (!token) {
+        const html = fs.readFileSync(path.join(__dirname, '../../public/templates/no-token.html'), 'utf8');
+        return res.status(400).send(html);
+    }
 
     try {
         const payload = jwt.verify(token, EMAIL_TOKEN_SECRET);
-
         const { email, username, hashedPassword, role } = payload;
 
-        const user = await authService.createUserAccount(email, username, hashedPassword, role);
-
-        if (!user) {
-            // create a static site to tell the user, there was an error while creating the account
+        try {
+            const user = await authService.createUserAccount(email, username, hashedPassword, role);
+            
+            const html = fs.readFileSync(path.join(__dirname, '../../public/templates/success.html'), 'utf8');
+            return res.status(200).send(html);
+            
+        } catch (userError) {
+            if (userError.message === 'User already exists') {
+                const html = fs.readFileSync(path.join(__dirname, '../../public/templates/user-exists.html'), 'utf8');
+                return res.status(409).send(html);
+            }
+            
+            const html = fs.readFileSync(path.join(__dirname, '../../public/templates/creation-error.html'), 'utf8');
+            return res.status(500).send(html);
         }
 
-        // const { accessToken, refreshToken } = generateToken(user.id, user.role, user.email);
-
-        //create a static site and redirect the use there instead, telling the user to go to their account and login.
-        res.redirect(`${frontendUrl}/verify-success`);
-
-    } catch (err) {
-        //instead of sending error... send a static site instead!
-        return sendError(res, 400, err.message || 'Invalid or expired token', err);
+    } catch (tokenError) {
+        const html = fs.readFileSync(path.join(__dirname, '../../public/templates/invalid-token.html'), 'utf8');
+        return res.status(400).send(html);
     }
 };
 

@@ -12,8 +12,11 @@ const accountRoute = require('./src/routes/accountRoute')
 const cartRoute = require('./src/routes/cartRoute')
 const webhookRoute = require('./src/routes/webhookRoute')
 const cors = require('cors');
+const path = require('path');
 
 const app = express();
+
+app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(cors({
   origin: '*',

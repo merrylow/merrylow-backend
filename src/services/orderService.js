@@ -7,7 +7,7 @@ const getAdminOrderCancellationEmail = require('../utils/getAdminOrderCancellati
 const emailService = require('../services/emailService');
 const adminEmails = process.env.ADMIN_EMAILS?.split(',') || [];
 const axios = require('axios');
-
+const generateRandomId = require('../utils/generateRandomId');
 
 exports.placeOrder = async (userId, details, email) => {
   const { address, notes, paymentMethod, name, phone } = details;
@@ -38,6 +38,7 @@ exports.placeOrder = async (userId, details, email) => {
 
   const order = await prisma.order.create({
     data: {
+      id : generateRandomId(),
       userId,
       status: paymentMethod === "CASH_ON_DELIVERY" ? "PLACED" : "PENDING",
       paymentMethod,
