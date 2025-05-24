@@ -49,7 +49,7 @@ exports.addToCart = async (req, res) => {
     const { productId, quantity, selectedAddons = [], basePrice, notes = "" } = req.body;
 
     if (!productId || !quantity || quantity < 1 || !Array.isArray(selectedAddons)) {
-      return sendError(res, 400, 'Invalid input: productId, quantity, and selectedAddons are required');
+      return sendError(res, 400, 'Invalid input: productId, quantity... are required');
     }
 
     const item = await cartService.addItemToCart( {

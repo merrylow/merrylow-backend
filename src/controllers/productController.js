@@ -55,7 +55,7 @@ exports.getProductById = async (req, res) => {
             return sendError(res, 404, "Product not found");
         }
 
-        return sendSuccess(res, 200, data);
+        return sendSuccess(res, 200, { data : product});
 
     } catch (error) {
         return sendError(res, 500, "Error fetching product", error);
