@@ -12,12 +12,14 @@ function getOrderCancellationEmailAdmin({
   billingName = "",
   billingAddress = "",
   billingPhone = "",
-  billingEmail = ""
+  billingEmail = "",
+  orderNote = ''
 }) {
   const productRows = products.map(p => `
     <tr>
       <td>
         ${p.name}<br />
+        ${p.note ? `Note: ${p.note}` : 'no notes'} <br />
         Vendor: <a href="${p.vendorLink}" target="_blank">${p.vendorName}</a>
       </td>
       <td>${p.quantity}</td>
@@ -107,11 +109,7 @@ function getOrderCancellationEmailAdmin({
               <td>${subtotal}</td>
             </tr>
             <tr>
-              <td colspan="2"><strong>Coupons:</strong></td>
-              <td>-</td>
-            </tr>
-            <tr>
-              <td colspan="2"><strong>Shipping:</strong></td>
+              <td colspan="2"><strong>Delivery:</strong></td>
               <td>${shipping}</td>
             </tr>
             <tr>
@@ -135,12 +133,14 @@ function getOrderCancellationEmailAdmin({
               <td>${serviceTime || "-"}</td>
             </tr>
           </table>
+          
+          ${orderNote ? `<h3 style="display: inline;">Order Note:</h3> <span style="display: inline;">${orderNote}</span>` : ''}
 
-          <h3>Billing address</h3>
+          <h3>Customer Address</h3>
           <p>
             ${billingName}<br/>
             ${billingAddress.replace(/\n/g, "<br/>")}<br/>
-            ${billingPhone}<br/>
+            <a href="tel:${billingPhone}">${billingPhone}</a><br/>
             <a href="mailto:${billingEmail}">${billingEmail}</a>
           </p>
 

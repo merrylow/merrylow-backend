@@ -9,6 +9,15 @@ const transporter = nodemailer.createTransport({
     }
 });
 
+
+const transporter2 = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.SECOND_GMAIL_USER, 
+        pass: process.env.SECOND_GMAIL_APP_PASSWORD
+    }
+});
+
 async function sendEmail(to, subject, text, html) {
     try {
         const mailOptions = {
@@ -24,10 +33,28 @@ async function sendEmail(to, subject, text, html) {
         console.log('Message ID:', info.messageId);
         return info;
     } catch (error) {
-        console.error('Error sending email:', error);
-        throw error;
+        console.error('Error sending email with the Official Gmail:', error);
+
+        try {
+            const backupMailOptions = {
+                from: `"MerryLow" <${process.env.SECOND_GMAIL_USER}>`,
+                to: to,
+                subject: subject,
+                text: text,
+                html: html
+            };
+
+            const backupInfo = await transporter2.sendMail(backupMailOptions);
+            console.log('Backup email sent successfully!');
+            console.log('Backup Message ID:', backupInfo.messageId);
+            return backupInfo;
+        } catch (backupError) {
+            console.error('Error sending email with SECOND_GMAIL_USER:', backupError);
+            throw backupError;
+        }
     }
 }
+
 
 async function sendAdminEmail(primaryEmail, bccEmails, subject, text, html) {
     try {
@@ -50,8 +77,26 @@ async function sendAdminEmail(primaryEmail, bccEmails, subject, text, html) {
         console.log('Message ID:', info.messageId);
         return info;
     } catch (error) {
-        console.error('Error sending admin email:', error);
-        throw error;
+        console.error('Error sending admin email with the Official Gmail:', error);
+
+        try {
+            const backupMailOptions = {
+                from: `"MerryLow" <${process.env.SECOND_GMAIL_USER}>`,
+                to: primaryEmail,
+                cc: Array.isArray(bccEmails) ? bccEmails : [bccEmails],
+                subject: subject,
+                text: text,
+                html: html
+            };
+
+            const backupInfo = await transporter2.sendMail(backupMailOptions);
+            console.log('Backup email sent successfully!');
+            console.log('Backup Message ID:', backupInfo.messageId);
+            return backupInfo;
+        } catch (backupError) {
+            console.error('Error sending email with SECOND_GMAIL_USER:', backupError);
+            throw backupError;
+        }
     }
 }
 

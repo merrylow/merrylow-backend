@@ -13,18 +13,21 @@ function getOrderConfirmationEmailUser({
   billingName = "Diamond Samuel",
   billingAddress = "International House\nLegon Campus\nGreater Accra",
   billingPhone = "0558420424",
-  billingEmail = "dwekiasamuel@gmail.com"
+  billingEmail = "ziglacity@gmail.com",
+  orderNote = ''
 }) {
   const productRows = products.map(p => `
     <tr>
       <td>
         ${p.name}<br />
+        ${p.note ? `Note: ${p.note}` : 'no notes'} <br />
         Vendor: <a href="${p.vendorLink}" target="_blank">${p.vendorName}</a>
       </td>
       <td>${p.quantity}</td>
       <td>${p.price}</td>
     </tr>
   `).join("");
+
 
   return `
     <!DOCTYPE html>
@@ -113,7 +116,7 @@ function getOrderConfirmationEmailUser({
               <td>${subtotal}</td>
             </tr>
             <tr>
-              <td colspan="2"><strong>Shipping:</strong></td>
+              <td colspan="2"><strong>Delivery:</strong></td>
               <td>${shipping}</td>
             </tr>
             <tr>
@@ -142,11 +145,13 @@ function getOrderConfirmationEmailUser({
             </tr>
           </table>
 
-          <h3>Billing address</h3>
+          ${orderNote ? `<h3 style="display: inline;">Order Note:</h3> <span style="display: inline;">${orderNote}</span>` : ''}
+
+          <h3>Customer Address</h3>
           <p>
             ${billingName}<br/>
             ${billingAddress.replace(/\n/g, "<br/>")}<br/>
-            ${billingPhone}<br/>
+            <a href="tel:${billingPhone}">${billingPhone}</a><br/>
             <a href="mailto:${billingEmail}">${billingEmail}</a>
           </p>
 

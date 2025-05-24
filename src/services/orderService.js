@@ -8,6 +8,7 @@ const emailService = require('../services/emailService');
 const adminEmails = process.env.ADMIN_EMAILS?.split(',') || [];
 const axios = require('axios');
 const generateRandomId = require('../utils/generateRandomId');
+const getCurrentTime = require('../utils/getCurrentTime')
 
 exports.placeOrder = async (userId, details, email) => {
   const { address, notes, paymentMethod, name, phone } = details;
@@ -142,8 +143,8 @@ exports.placeOrder = async (userId, details, email) => {
     try {
       const descriptionObj = JSON.parse(item.description);
       descriptionDetails = Object.entries(descriptionObj)
-        .map(([key, value]) => `${key} - ${value}`)
-        .join(' - ');
+        .map(([key, value]) => `${key} - GH$${value}`)
+        .join(', ');
     } catch {
       descriptionDetails = item.description;
     }
@@ -154,6 +155,7 @@ exports.placeOrder = async (userId, details, email) => {
       vendorLink: `https://app.merrylow.com/api/vendors/${item.restaurant.id}`,
       quantity: item.quantity,
       price: formatPrice(item.totalPrice),
+      note: item.notes,
     };
   });
 
@@ -163,16 +165,17 @@ exports.placeOrder = async (userId, details, email) => {
     orderDate: formatDate(populatedOrder.createdAt),
     products,
     subtotal: formatPrice(populatedOrder.totalPrice),
-    shipping: "Free delivery", // in case something is added to shipping... then total wihh increase by this amount
+    shipping: "Free", // in case something is added to shipping... then total wihh increase by this amount
     total: formatPrice(populatedOrder.totalPrice),
     paymentMethod: paymentMethodMap[populatedOrder.paymentMethod] || populatedOrder.paymentMethod,
     serviceType: "Campus Delivery", // Update with actual service type if available
     serviceDate: formatDate(populatedOrder.createdAt),
-    serviceTime: "", // Add actual service time if available
+    serviceTime: getCurrentTime(),
     billingName: populatedOrder.customerName,
     billingAddress: populatedOrder.address.replace(/\\n/g, '\n'),
     billingPhone: populatedOrder.customerPhone,
     billingEmail: populatedOrder.user?.email || 'no-email@example.com',
+    orderNote : populatedOrder.notes,
   };
 
   await emailService.sendEmail(
@@ -184,8 +187,7 @@ exports.placeOrder = async (userId, details, email) => {
 
   const adminEmailData = {
     ...emailData,
-    serviceType: "Home Delivery",
-    serviceTime: "",
+    serviceType: "Free Delivery",
   };
 
   // Send admin notifications
