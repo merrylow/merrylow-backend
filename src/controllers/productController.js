@@ -21,23 +21,25 @@ exports.getProducts = async (req, res) => {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
 
-        const products = await productService.getProducts(productName, limit, page);
+        const products = await productService.getProducts(
+            productName,
+            limit,
+            page,
+        );
 
-        if (!products || products.length === 0) { 
-            return sendError(res, 404, "No products found");
+        if (!products || products.length === 0) {
+            return sendError(res, 404, 'No products found');
         }
 
         return sendSuccess(res, 200, {
             page,
             limit,
-            products
+            products,
         });
-
     } catch (error) {
-        return sendError(res, 500, "Error fetching products", error);
+        return sendError(res, 500, 'Error fetching products', error);
     }
-}
-
+};
 
 /**
  * @desc Fetch a single product by its ID
@@ -52,12 +54,11 @@ exports.getProductById = async (req, res) => {
         const product = await productService.getProductById(productId);
 
         if (!product) {
-            return sendError(res, 404, "Product not found");
+            return sendError(res, 404, 'Product not found');
         }
 
-        return sendSuccess(res, 200, { data : product});
-
+        return sendSuccess(res, 200, { data: product });
     } catch (error) {
-        return sendError(res, 500, "Error fetching product", error);
+        return sendError(res, 500, 'Error fetching product', error);
     }
-}
+};
