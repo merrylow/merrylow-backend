@@ -1,16 +1,19 @@
 const restaurantService = require('../services/restaurantService');
 const { sendError, sendSuccess } = require('../utils/responseHandler');
-const redisClient = require("../config/redis");
+const redisClient = require('../config/redis');
 
 exports.getRestaurants = async (req, res) => {
     try {
-        const cacheKey = "restaurants_cache";
+        const cacheKey = 'restaurants_cache';
 
         const cachedData = await redisClient.get(cacheKey);
 
         if (cachedData) {
             const restaurants = JSON.parse(cachedData);
-            return sendSuccess(res, 200, { source: "cache", data: restaurants });
+            return sendSuccess(res, 200, {
+                source: 'cache',
+                data: restaurants,
+            });
         }
 
         const restaurants = await restaurantService.getRestaurants();
@@ -19,15 +22,18 @@ exports.getRestaurants = async (req, res) => {
             return sendError(res, 404, 'No restaurants found');
         }
 
-        await redisClient.set(cacheKey, JSON.stringify(restaurants), "EX", 86400);
+        await redisClient.set(
+            cacheKey,
+            JSON.stringify(restaurants),
+            'EX',
+            86400,
+        );
 
-        return sendSuccess(res, 200, { source: "db", data: restaurants });
-
+        return sendSuccess(res, 200, { source: 'db', data: restaurants });
     } catch (error) {
         return sendError(res, 500, 'Server Error', error);
     }
 };
-
 
 exports.getRestaurantById = async (req, res) => {
     const { id } = req.params;
@@ -48,13 +54,10 @@ exports.getRestaurantById = async (req, res) => {
         await redisClient.set(cacheKey, JSON.stringify(restaurant));
 
         return sendSuccess(res, 200, { source: 'db', data: restaurant });
-
     } catch (error) {
         return sendError(res, 500, 'Server Error', error);
     }
 };
-
-
 
 exports.updateRestaurant = async (req, res) => {
     try {
@@ -62,19 +65,23 @@ exports.updateRestaurant = async (req, res) => {
         const { userRole } = req.user;
         const data = req.body;
 
-        if (!userRole || userRole !== "admin") {
-            return sendError(res, 401, "Unauthorized: Admin access required");
+        if (!userRole || userRole !== 'admin') {
+            return sendError(res, 401, 'Unauthorized: Admin access required');
         }
 
-        const updated = await restaurantService.updateRestaurant({ data, id})
+        const updated = await restaurantService.updateRestaurant({ data, id });
 
-        await redisClient.del("restaurants_cache");
+        await redisClient.del('restaurants_cache');
 
         await redisClient.del(`restaurant_${id}`);
 
-        return sendSuccess(res, 200, { data: updated }, "Restaurant updated successfully");
-
+        return sendSuccess(
+            res,
+            200,
+            { data: updated },
+            'Restaurant updated successfully',
+        );
     } catch (error) {
-        return sendError(res, 500, "Update error", error);
+        return sendError(res, 500, 'Update error', error);
     }
 };
