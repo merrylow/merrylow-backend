@@ -31,20 +31,29 @@ exports.getRestaurants = async (req, res) => {
 
 exports.getRestaurantById = async (req, res) => {
     const { id } = req.params;
+    const cacheKey = `restaurant_${id}`;
 
     try {
-        const restaurant = await restaurantService.getRestaurantById(id);
+        const cachedData = await redisClient.get(cacheKey);
+        if (cachedData) {
+            const restaurant = JSON.parse(cachedData);
+            return sendSuccess(res, 200, { source: 'cache', data: restaurant });
+        }
 
+        const restaurant = await restaurantService.getRestaurantById(id);
         if (!restaurant) {
             return sendError(res, 404, 'Restaurant not found');
         }
 
-        return sendSuccess(res, 200, { data: restaurant });
+        await redisClient.set(cacheKey, JSON.stringify(restaurant));
+
+        return sendSuccess(res, 200, { source: 'db', data: restaurant });
 
     } catch (error) {
         return sendError(res, 500, 'Server Error', error);
     }
 };
+
 
 
 exports.updateRestaurant = async (req, res) => {
@@ -60,6 +69,8 @@ exports.updateRestaurant = async (req, res) => {
         const updated = await restaurantService.updateRestaurant({ data, id})
 
         await redisClient.del("restaurants_cache");
+
+        await redisClient.del(`restaurant_${id}`);
 
         return sendSuccess(res, 200, { data: updated }, "Restaurant updated successfully");
 
