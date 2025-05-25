@@ -6,11 +6,13 @@
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "decimal.js": "^10.5.0",
-    "dotenv": "^16.4.7",
+    "dotenv": "^16.5.0",
     "express": "^5.1.0",
     "google-auth-library": "^9.15.1",
+    "ioredis": "^5.6.1",
     "jsonwebtoken": "^9.0.2",
-    "nodemailer": "^7.0.2"
+    "nodemailer": "^7.0.2",
+    "redis": "^5.1.0"
   },
   "name": "merrylow-backend",
   "version": "1.0.0",

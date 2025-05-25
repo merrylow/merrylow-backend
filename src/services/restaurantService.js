@@ -47,3 +47,17 @@ exports.getRestaurantById = async (restaurantId) => {
     }
 };
 
+
+exports.updateRestaurant = async ( {data, id} ) => {
+    try {
+
+        return prisma.restaurant.update({
+            where: { id },
+            data
+        });    
+
+    } catch (error) {
+        console.error('DB Error (updateRestaurant):', error);
+        throw new Error('Failed to update restaurant');
+    }
+}
