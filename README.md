@@ -66,14 +66,17 @@ npx prisma migrate dev --name init
 # Start the development server
 npm run dev
 
+```
+
 ---
+
 ## API Routes
 
 Below are some of the core API endpoints:
 
 | **Endpoint**      | **Description**                            |
 | ----------------- | ------------------------------------------ |
-| `/api/auth`       | Handles authentication |
+| `/api/auth`       | Handles authentication                     |
 | `/api/refresh`    | Token refresh mechanism                    |
 | `/api/users`      | User management routes                     |
 | `/api/checkout`   | Payment processing & checkout              |
@@ -84,6 +87,7 @@ Below are some of the core API endpoints:
 | `/api/account`    | Account settings & modifications           |
 | `/api/cart`       | Shopping cart management                   |
 | `/api/webhook`    | Webhook handlers for external integrations |
+| `/api/`           | Get all trending and juicy home features   |
 
 ---
 
@@ -94,5 +98,3 @@ Developed & maintained by [ZiglaCity](https://github.com/ziglacity).
 For environment file access (`.env`) or any support, contact via **GitHub**. 💖 **Merrylow**
 
 ---
-
-```
