@@ -258,6 +258,7 @@ exports.changePassword = async (req, res) => {
             path.join(__dirname, '../../public/templates/reset-feedback/success.html'),
             'utf8',
         );
+        return res.status(200).send(html);
     } catch (err) {
         if (err.message === 'Invalid or expired token') {
             const html = fs.readFileSync(
@@ -283,6 +284,10 @@ exports.resetPassword = async (req, res) => {
 
     if (!oldPassword || !newPassword) {
         return sendError(res, 400, 'Old and new passwords are required');
+    }
+
+    if (oldPassword == newPassword) {
+        return sendError(res, 400, 'New password must be different.');
     }
 
     try {
