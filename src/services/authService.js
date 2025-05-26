@@ -1,20 +1,20 @@
-const bcrypt = require('bcryptjs')
-const { PrismaClient } = require('@prisma/client')
-const prisma = new PrismaClient()
-const generateTokens = require('../utils/generateToken')
-const saveRefreshToken = require('../utils/saveRefreshToken')
+const bcrypt = require('bcryptjs');
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
+const generateTokens = require('../utils/generateToken');
+const saveRefreshToken = require('../utils/saveRefreshToken');
 const jwt = require('jsonwebtoken');
 const emailService = require('../services/emailService');
 const { getHtmlEmail } = require('../utils/getHtmlEmail');
 const { getLoginEmail } = require('../utils/getLoginHtmlEmail');
-const { getPasswordResetHtml } = require('../utils/getPasswordResetHtml')
+const { getPasswordResetHtml } = require('../utils/getPasswordResetHtml');
 const { OAuth2Client } = require('google-auth-library');
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
-const backend_url = process.env.BACKEND_URL
+const backend_url = process.env.BACKEND_URL;
 const EMAIL_TOKEN_SECRET = process.env.EMAIL_TOKEN_SECRET;
 const EMAIL_TOKEN_EXPIRY = '10m';
-
+const PASSWORD_RESET_EXPIRY = '2m';
 
 exports.loginUserService = async (email, password) => {
     try {
@@ -31,30 +31,34 @@ exports.loginUserService = async (email, password) => {
             throw new Error('Invalid password');
         }
 
-        const { accessToken, refreshToken } = generateTokens(user.id, user.role, user.email);
+        const { accessToken, refreshToken } = generateTokens(
+            user.id,
+            user.role,
+            user.email,
+        );
 
         await saveRefreshToken(user.id, refreshToken);
 
         return { accessToken, refreshToken };
-
     } catch (error) {
         console.error('Error during login:', error);
         throw error;
     }
-}
+};
 
-
-exports.signupUserService = async (username, email, password, role = "CUSTOMER") => {
+exports.signupUserService = async (username, email, password, role = 'CUSTOMER') => {
     try {
         let hashedPassword = null;
-        if (password){
+        if (password) {
             hashedPassword = await bcrypt.hash(password, 10);
         }
 
         const emailToken = jwt.sign(
             { username, email, hashedPassword, role },
             EMAIL_TOKEN_SECRET,
-            { expiresIn: EMAIL_TOKEN_EXPIRY }
+            {
+                expiresIn: EMAIL_TOKEN_EXPIRY,
+            },
         );
 
         const verificationLink = `${backend_url}api/auth/verify?token=${emailToken}`;
@@ -63,14 +67,13 @@ exports.signupUserService = async (username, email, password, role = "CUSTOMER")
             email,
             'Verify your email',
             `Click the link to verify: ${verificationLink}`,
-            getHtmlEmail(username, verificationLink)
+            getHtmlEmail(username, verificationLink),
         );
-          
     } catch (error) {
         console.error('Error during signup:', error);
         throw error;
     }
-}
+};
 
 exports.loginWithEmailService = async (email) => {
     try {
@@ -79,7 +82,7 @@ exports.loginWithEmailService = async (email) => {
             select: {
                 id: true,
                 role: true,
-                email: true
+                email: true,
             },
         });
 
@@ -88,9 +91,9 @@ exports.loginWithEmailService = async (email) => {
         }
 
         const emailToken = jwt.sign(
-            { id: user.id, role: user.role, email },            
+            { id: user.id, role: user.role, email },
             EMAIL_TOKEN_SECRET,
-            { expiresIn: '15m' }
+            { expiresIn: '15m' },
         );
 
         const loginLink = `${backend_url}/auth/verify/login/?token=${emailToken}`;
@@ -99,14 +102,13 @@ exports.loginWithEmailService = async (email) => {
             email,
             'Login',
             `Click the link to login: ${loginLink}`,
-            getLoginEmail(user.name, loginLink)
+            getLoginEmail(user.name, loginLink),
         );
-
-    } catch(error){
+    } catch (error) {
         console.error('Error during login:', error);
         throw error;
     }
-}
+};
 
 exports.verifyGoogleIdToken = async (idToken) => {
     const ticket = await client.verifyIdToken({
@@ -114,9 +116,8 @@ exports.verifyGoogleIdToken = async (idToken) => {
         audience: process.env.GOOGLE_CLIENT_ID,
     });
 
-    return ticket.getPayload(); 
+    return ticket.getPayload();
 };
-
 
 exports.findOrCreateUser = async ({ email, name, picture, googleId }) => {
     let user = await prisma.user.findUnique({ where: { email } });
@@ -126,8 +127,8 @@ exports.findOrCreateUser = async ({ email, name, picture, googleId }) => {
             data: {
                 name,
                 email,
-                imageUrl : picture,
-                providerId : googleId,
+                imageUrl: picture,
+                providerId: googleId,
             },
         });
     }
@@ -135,105 +136,92 @@ exports.findOrCreateUser = async ({ email, name, picture, googleId }) => {
     return user;
 };
 
-
-exports.createUserAccount = async (email, username, hashedPassword, role ) =>{
-  
+exports.createUserAccount = async (email, username, hashedPassword, role) => {
     const existing = await prisma.user.findUnique({ where: { email } });
 
-    if (existing) throw new Error ('User already exists' )
-        
+    if (existing) throw new Error('User already exists');
+
     const newUser = await prisma.user.create({
-      data: {
-        name: username,
-        email,
-        password: hashedPassword,
-        role
-      }
+        data: {
+            name: username,
+            email,
+            password: hashedPassword,
+            role,
+        },
     });
 
     return newUser;
-}
+};
 
-  
-exports.sendPasswordResetEmail = async (user) => {
-    const token = jwt.sign({ email: user.email }, process.env.JWT_RESET_SECRET, { expiresIn: '10m' })
-    const resetLink = `http://localhost:5000/api/auth/reset-password?token=${token}`;
+exports.sendPasswordResetEmail = async (email, newPassword, user) => {
+    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+
+    const token = jwt.sign(
+        { email: email, password: hashedNewPassword },
+        process.env.JWT_RESET_SECRET,
+        {
+            expiresIn: PASSWORD_RESET_EXPIRY,
+        },
+    );
+    const resetLink = `${backend_url}api/auth/change-password?token=${token}`;
 
     await emailService.sendEmail(
-      user.email,
-      'Reset your password',
-      `Reset link: ${resetLink}`,
-      getPasswordResetHtml(user.name || 'there', resetLink)
+        email,
+        'Reset your password',
+        `Reset link: ${resetLink}`,
+        getPasswordResetHtml(user.name || 'there', resetLink),
     );
-  
+
     return true;
 };
-  
 
-exports.resetUserPassword = async (token, newPassword) => {
+exports.updateUserPassword = async (token) => {
     try {
         const decoded = jwt.verify(token, process.env.JWT_RESET_SECRET);
-        const userEmail = decoded.email;
-    
-        const hashedPassword = await bcrypt.hash(newPassword, 10);
-    
+        const { email, password } = decoded;
+
         await prisma.user.update({
-            where: { email: userEmail },
-            data: { password: hashedPassword },
+            where: { email },
+            data: { password },
         });
-    
+
         return true;
     } catch (err) {
-        throw new Error('Invalid or expired token');
+        if (err.name === 'JsonWebTokenError' || err.name === 'TokenExpiredError') {
+            throw new Error('Invalid or expired token');
+        }
+
+        throw new Error(err.message || 'An unexpected error occurred');
     }
 };
 
-
-
-exports.changeUserPassword = async (userId, oldPassword, newPassword) => {
+exports.resetUserPassword = async (userId, oldPassword, newPassword) => {
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new Error('User not found');
-  
+
     const match = await bcrypt.compare(oldPassword, user.password);
     if (!match) throw new Error('Old password is incorrect');
-  
+
     const hashedNewPassword = await bcrypt.hash(newPassword, 10);
-  
+
     await prisma.user.update({
         where: { id: userId },
         data: { password: hashedNewPassword },
     });
-  
+
     return true;
 };
 
-  
-exports.removeRefreshToken = async (refreshToken) => {
+exports.removeRefreshToken = async (id) => {
     try {
-        const userToUpdate = await prisma.user.findFirst({
+        await prisma.user.update({
             where: {
-                refreshToken: refreshToken 
-            }
-        });
-
-        if (!userToUpdate) {
-            throw new'No user found with that refresh token.' 
-        }
-
-        const updatedUser = await prisma.user.update({
-            where: {
-                id: userToUpdate.id
+                id,
             },
             data: {
-                refreshToken: null
+                refreshToken: null,
             },
-            select: { 
-                id: true,
-                name: true,
-                email: true,
-            }
         });
-
     } catch (error) {
         console.error('Error removing refresh token:', error);
         throw new Error('Failed to remove refresh token');
