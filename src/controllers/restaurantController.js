@@ -22,12 +22,7 @@ exports.getRestaurants = async (req, res) => {
             return sendError(res, 404, 'No restaurants found');
         }
 
-        await redisClient.set(
-            cacheKey,
-            JSON.stringify(restaurants),
-            'EX',
-            86400,
-        );
+        await redisClient.set(cacheKey, JSON.stringify(restaurants), 'EX', 86400);
 
         return sendSuccess(res, 200, { source: 'db', data: restaurants });
     } catch (error) {

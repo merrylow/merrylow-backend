@@ -36,7 +36,7 @@ app.use('/api/refresh', refreshRoute);
 app.use('/api/users', userRoute);
 app.use('/api/checkout', checkoutRoute);
 app.use('/api/order', orderRoute);
-app.use('/api/restaurant', restaurantRoute);
+app.use('/api/restaurants', restaurantRoute);
 app.use('/api/products', productRoute);
 app.use('/api/vendor', vendorRoute);
 app.use('/api/account', accountRoute);
