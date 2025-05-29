@@ -1,190 +1,204 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const Decimal = require('decimal.js');
-const processSelectedAddons = require('../utils/processSelectedAddons')
+const processSelectedAddons = require('../utils/processSelectedAddons');
 
 exports.getCartItemsByUser = async (userId) => {
     const cart = await prisma.cart.findUnique({
-      where: {
-        userId: userId,
-      },
-      include: {
-        items: {
-          include: {
-            menu: true,
-          },
+        where: {
+            userId: userId,
         },
-      },
+        include: {
+            items: {
+                include: {
+                    menu: true,
+                },
+            },
+        },
     });
-  
+
     return cart;
-  };
-  
-  
-exports.addItemToCart = async ({ userId, productId, quantity, selectedAddons, basePrice, notes }) => {
-  const menu = await prisma.menu.findUnique( { where: {id: productId}});
+};
 
-  // the frontend should make sure that menus or items that are not available should not have the add to cart features so that we don't waste resources processing that data
-  if(!menu || !menu.available)  throw new Error("Menu item not found or unavailable");
+exports.addItemToCart = async ({
+    userId,
+    productId,
+    quantity,
+    selectedAddons,
+    basePrice,
+    notes,
+}) => {
+    const menu = await prisma.menu.findUnique({ where: { id: productId } });
 
-  const realBasePrice = new Decimal(menu.price); 
-  const selectedBasePrice = new Decimal(basePrice);
+    // the frontend should make sure that menus or items that are not available should not have the add to cart features so that we don't waste resources processing that data
+    if (!menu || !menu.available) throw new Error('Menu item not found or unavailable');
 
-  if (selectedBasePrice.lessThan(realBasePrice)) {
-    throw new Error('Base price cannot be less than menu price');
-  }
+    const realBasePrice = new Decimal(menu.price);
+    const selectedBasePrice = new Decimal(basePrice);
 
-  const menuAddOns = menu.addOns || [];
+    if (selectedBasePrice.lessThan(realBasePrice)) {
+        throw new Error('Base price cannot be less than menu price');
+    }
 
-  const {addonsTotal, description} = processSelectedAddons(selectedAddons, menuAddOns)
+    const menuAddOns = menu.addOns || [];
 
-  const unitPrice = selectedBasePrice.plus(addonsTotal);
-  const totalPrice = unitPrice.times(quantity);
+    const { addonsTotal, description } = processSelectedAddons(
+        selectedAddons,
+        menuAddOns,
+    );
+    description['name'] = `${menu.name} : ${menu.price}`;
 
-  // create cart if it doesnt exist
-  let cart = await prisma.cart.findUnique( {
-    where: { userId },
-  })
+    const unitPrice = selectedBasePrice.plus(addonsTotal);
+    const totalPrice = unitPrice.times(quantity);
 
-  if (!cart){
-    cart = await prisma.cart.create( {
-      data: { userId },
-    })
-  }
+    // create cart if it doesnt exist
+    let cart = await prisma.cart.findUnique({
+        where: { userId },
+    });
 
-  // to prevent duplicate cart item, i'll work on merging the the items based on the productId and description, but for now this is standard
-  const newCartItem = await prisma.cartItem.create({
-    data: {
-      cartId: cart.id,
-      productId,
-      quantity,
-      unitPrice: unitPrice.toDecimalPlaces(2),
-      totalPrice: totalPrice.toDecimalPlaces(2),
-      description: JSON.stringify(description),
-      notes: notes || null,
-    },
-  });
+    if (!cart) {
+        cart = await prisma.cart.create({
+            data: { userId },
+        });
+    }
 
+    // to prevent duplicate cart item, i'll work on merging the the items based on the productId and description, but for now this is standard
+    const newCartItem = await prisma.cartItem.create({
+        data: {
+            cartId: cart.id,
+            productId,
+            quantity,
+            unitPrice: unitPrice.toDecimalPlaces(2),
+            totalPrice: totalPrice.toDecimalPlaces(2),
+            description: JSON.stringify(description),
+            notes: notes || null,
+        },
+    });
 
-  return newCartItem;
-}
+    return newCartItem;
+};
 
+exports.updateCartItem = async ({
+    itemId,
+    userId,
+    quantity,
+    selectedAddons,
+    basePrice,
+    notes,
+}) => {
+    const cartItem = await prisma.cartItem.findUnique({
+        where: { id: itemId },
+        include: {
+            cart: true,
+            menu: true,
+        },
+    });
 
-exports.updateCartItem = async ( { itemId, userId, quantity, selectedAddons, basePrice, notes}) => {
-  const cartItem = await prisma.cartItem.findUnique({
-    where: { id: itemId },
-    include: {
-      cart: true,
-      menu: true,
-    },
-  });
-  
-  if (!cartItem || cartItem.cart.userId !== userId) {
-    throw new Error("Unauthorized or item not found");
-  }
+    if (!cartItem || cartItem.cart.userId !== userId) {
+        throw new Error('Unauthorized or item not found');
+    }
 
-  const realBasePrice = new Decimal(cartItem.menu.price); 
-  const selectedBasePrice = new Decimal(basePrice);
+    const realBasePrice = new Decimal(cartItem.menu.price);
+    const selectedBasePrice = new Decimal(basePrice);
 
-  if (selectedBasePrice.lessThan(realBasePrice)) {
-    throw new Error('Base price cannot be less than menu price');
-  }
+    if (selectedBasePrice.lessThan(realBasePrice)) {
+        throw new Error('Base price cannot be less than menu price');
+    }
 
-  const menuAddOns = cartItem.menu.addOns || [];
-  const { addonsTotal, description} = processSelectedAddons(selectedAddons, menuAddOns)
-  
-  const unitPrice = updatedBasePrice.plus(addonsTotal);
-  const finalQuantity = quantity || cartItem.quantity;
-  const totalPrice = unitPrice.times(finalQuantity);
+    const menuAddOns = cartItem.menu.addOns || [];
+    const { addonsTotal, description } = processSelectedAddons(
+        selectedAddons,
+        menuAddOns,
+    );
 
-  const updatedItem = await prisma.cartItem.update({
-    where: { id: itemId },
-    data: {
-      quantity: finalQuantity,
-      unitPrice: unitPrice.toDecimalPlaces(2),
-      totalPrice: totalPrice.toDecimalPlaces(2),
-      description: JSON.stringify(description),
-      notes: notes ?? cartItem.notes,
-    },
-  });
-  
-  return {
-    message: 'Cart item updated successfully',
-    data: updatedItem,
-  }; 
-} 
+    const unitPrice = updatedBasePrice.plus(addonsTotal);
+    const finalQuantity = quantity || cartItem.quantity;
+    const totalPrice = unitPrice.times(finalQuantity);
 
+    const updatedItem = await prisma.cartItem.update({
+        where: { id: itemId },
+        data: {
+            quantity: finalQuantity,
+            unitPrice: unitPrice.toDecimalPlaces(2),
+            totalPrice: totalPrice.toDecimalPlaces(2),
+            description: JSON.stringify(description),
+            notes: notes ?? cartItem.notes,
+        },
+    });
+
+    return {
+        message: 'Cart item updated successfully',
+        data: updatedItem,
+    };
+};
 
 //for now users will only be able to update the quantity of their cartItem
 exports.updateCartItemQuantity = async (itemId, userId, quantity) => {
-  const cartItem = await prisma.cartItem.findUnique({
-    where: { id: itemId },
-    include: {
-      cart: true,
-    },
-  });
-  
-  if (!cartItem || cartItem.cart.userId !== userId) {
-    throw new Error("Unauthorized or item not found");
-  }
+    const cartItem = await prisma.cartItem.findUnique({
+        where: { id: itemId },
+        include: {
+            cart: true,
+        },
+    });
 
-  const unitPrice = cartItem.unitPrice;
-  const totalPrice = unitPrice.times(quantity);
-  
-  return await prisma.cartItem.update({
-    where: {
-      id: itemId
-    },
-    data: {
-      totalPrice: totalPrice,
-      quantity
+    if (!cartItem || cartItem.cart.userId !== userId) {
+        throw new Error('Unauthorized or item not found');
     }
-  });
 
-  //in case we have to return the full cart instead
-  // const fullCart = await prisma.cart.findUnique({
-  //   where: {
-  //     userId: userId
-  //   },
-  //   include: {
-  //     items: {
-  //       include: {
-  //         menu: true
-  //       }
-  //     }
-  //   }
-  // });
+    const unitPrice = cartItem.unitPrice;
+    const totalPrice = unitPrice.times(quantity);
 
-  // return fullCart;
-}
+    return await prisma.cartItem.update({
+        where: {
+            id: itemId,
+        },
+        data: {
+            totalPrice: totalPrice,
+            quantity,
+        },
+    });
 
+    //in case we have to return the full cart instead
+    // const fullCart = await prisma.cart.findUnique({
+    //   where: {
+    //     userId: userId
+    //   },
+    //   include: {
+    //     items: {
+    //       include: {
+    //         menu: true
+    //       }
+    //     }
+    //   }
+    // });
 
-exports.deleteCartItem = async ( userId, itemId ) => {
-  const cartItem = await prisma.cartItem.findUnique({
-    where: { id: itemId },
-    include: { cart: true },
-  });
+    // return fullCart;
+};
 
-  if (!cartItem || cartItem.cart.userId !== userId) {
-    throw new Error('Item not found or access denied');
-  }
+exports.deleteCartItem = async (userId, itemId) => {
+    const cartItem = await prisma.cartItem.findUnique({
+        where: { id: itemId },
+        include: { cart: true },
+    });
 
-  await prisma.cartItem.delete({
-    where: { id: itemId },
-  });
-}
+    if (!cartItem || cartItem.cart.userId !== userId) {
+        throw new Error('Item not found or access denied');
+    }
 
+    await prisma.cartItem.delete({
+        where: { id: itemId },
+    });
+};
 
-exports.clearCart = async ( {userId }) => {
-  const cart = await prisma.cart.findUnique({
-    where: { userId },
-    include: { items: true },
-  });
+exports.clearCart = async ({ userId }) => {
+    const cart = await prisma.cart.findUnique({
+        where: { userId },
+        include: { items: true },
+    });
 
-  if (!cart) throw new Error('Cart not found');
+    if (!cart) throw new Error('Cart not found');
 
-  await prisma.cartItem.deleteMany({
-    where: { cartId: cart.id },
-  });
-}
-  
+    await prisma.cartItem.deleteMany({
+        where: { cartId: cart.id },
+    });
+};
