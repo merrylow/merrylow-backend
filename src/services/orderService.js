@@ -143,6 +143,7 @@ exports.placeOrder = async (userId, details, email) => {
         try {
             const descriptionObj = JSON.parse(item.description);
             descriptionDetails = Object.entries(descriptionObj)
+                .filter(([key]) => key !== 'name')
                 .map(([key, value]) => `${key} - GH$${value}`)
                 .join(', ');
         } catch {
@@ -150,7 +151,7 @@ exports.placeOrder = async (userId, details, email) => {
         }
 
         return {
-            name: `${item.menu.name}${descriptionDetails ? ` - ${descriptionDetails}` : ''}`,
+            name: `${item.menu.name} - GH$${item.menu.price} :${descriptionDetails ? ` - ${descriptionDetails}` : ''}`,
             vendorName: item.restaurant.name,
             vendorLink: `https://app.merrylow.com/api/vendors/${item.restaurant.id}`,
             quantity: item.quantity,

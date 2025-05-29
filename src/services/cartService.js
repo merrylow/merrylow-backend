@@ -45,8 +45,8 @@ exports.addItemToCart = async ({
     const { addonsTotal, description } = processSelectedAddons(
         selectedAddons,
         menuAddOns,
+        menu,
     );
-    description['name'] = `${menu.name} : ${menu.price}`;
 
     const unitPrice = selectedBasePrice.plus(addonsTotal);
     const totalPrice = unitPrice.times(quantity);
