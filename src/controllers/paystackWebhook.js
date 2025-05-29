@@ -22,13 +22,20 @@ exports.handleWebhook = async (req, res) => {
                 where: { id: orderId },
                 data: {
                     status: 'PLACED',
+                    paymentMethod:
+                        event.data.channel === 'mobile_money' ? 'MOBILE_MONEY' : 'CARD',
                     payment: {
-                        create: {
+                        update: {
                             reference: event.data.reference,
                             amount: event.data.amount / 100,
+                            method:
+                                event.data.channel === 'mobile_money'
+                                    ? 'MOBILE_MONEY'
+                                    : 'CARD',
+                            status: 'SUCCESS',
+                            transactionId: String(event.data.id),
                             channel: event.data.channel,
                             currency: event.data.currency,
-                            status: event.data.status,
                             paidAt: new Date(event.data.paid_at),
                         },
                     },
@@ -40,15 +47,29 @@ exports.handleWebhook = async (req, res) => {
             console.error('Error updating order from webhook:', err);
             return res.status(500).send('Error updating order');
         }
-    } else if (event === 'charge.failed' || event.event === 'charge.abandoned') {
-        await prisma.order.update({
-            where: { id: orderId },
-            data: {
-                status: 'FAILED',
-            },
-        });
+    } else if (event.event === 'charge.failed' || event.event === 'charge.abandoned') {
+        const orderId = event.data.metadata.orderId;
 
-        return res.status(200).json({ message: 'Payment failed, order status updated' });
+        try {
+            await prisma.order.update({
+                where: { id: orderId },
+                data: {
+                    status: 'FAILED',
+                    payment: {
+                        update: {
+                            status: 'FAILED',
+                        },
+                    },
+                },
+            });
+
+            return res
+                .status(200)
+                .json({ message: 'Payment failed, order and payment status updated' });
+        } catch (err) {
+            console.error('Error updating failed payment:', err);
+            return res.status(500).send('Error updating failed payment');
+        }
     }
 
     res.status(200).send('Event received');

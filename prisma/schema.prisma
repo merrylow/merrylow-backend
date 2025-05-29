@@ -237,6 +237,10 @@ model Payment {
   method        PaymentMethod
   status        PaymentStatus @default(PENDING)
   transactionId String?
+  reference     String?
+  channel       String?
+  currency      String        @default("GHS")
+  paidAt        DateTime?
   createdAt     DateTime      @default(now())
 
   order Order @relation(fields: [orderId], references: [id])
