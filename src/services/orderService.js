@@ -1,14 +1,8 @@
 const { PrismaClient, Prisma } = require('@prisma/client');
 const prisma = new PrismaClient();
-const getUserOrderConfirmationEmail = require('../utils/getUserOrderConfirmationEmail');
-const getUserOrderCompletionEmail = require('../utils/getUserOrderCompletionEmail');
-const getAdminOrderConfirmationEmail = require('../utils/getAdminOrderConfirmationEmail');
-const getAdminOrderCancellationEmail = require('../utils/getAdminOrderCancellationEmail');
-const emailService = require('../services/emailService');
-const adminEmails = process.env.ADMIN_EMAILS?.split(',') || [];
 const axios = require('axios');
 const generateRandomId = require('../utils/generateRandomId');
-const getCurrentTime = require('../utils/getCurrentTime');
+const { sendOrderEmails } = require('./sendOrderEmails');
 
 exports.placeOrder = async (userId, details, email) => {
     const { address, notes, paymentMethod, name, phone } = details;
@@ -87,7 +81,7 @@ exports.placeOrder = async (userId, details, email) => {
             },
             {
                 headers: {
-                    Authorization: `Bearer ${process.env.PAYSTACK_LIVE_SECRET_KEY}`,
+                    Authorization: `Bearer ${process.env.PAYSTACK_TEST_SECRET_KEY}`,
                     'Content-Type': 'application/json',
                 },
             },
@@ -101,115 +95,7 @@ exports.placeOrder = async (userId, details, email) => {
     }
 
     //if the payment detials is cash on delivery then we send the user and admins email about the order
-    const populatedOrder = await prisma.order.findUnique({
-        where: { id: order.id },
-        include: {
-            orderItems: {
-                include: {
-                    menu: true,
-                    restaurant: true,
-                },
-            },
-            user: {
-                select: {
-                    email: true,
-                    name: true,
-                },
-            },
-        },
-    });
-
-    if (!populatedOrder) {
-        throw new Error('Failed to retrieve order details');
-    }
-
-    const formatPrice = (price) => {
-        return new Intl.NumberFormat('en-GH', {
-            style: 'currency',
-            currency: 'GHS',
-        }).format(Number(price));
-    };
-
-    const formatDate = (date) => {
-        return new Date(date).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-        });
-    };
-
-    const paymentMethodMap = {
-        MOBILE_MONEY: 'Mobile Money',
-        CARD: 'Bank Card',
-        CASH_ON_DELIVERY: 'Cash on Delivery',
-    };
-
-    const products = populatedOrder.orderItems.map((item) => {
-        let descriptionDetails = '';
-        try {
-            const descriptionObj = JSON.parse(item.description);
-            descriptionDetails = Object.entries(descriptionObj)
-                .filter(([key]) => key !== 'name')
-                .map(([key, value]) => `${key} - GH$${value}`)
-                .join(', ');
-        } catch {
-            descriptionDetails = item.description;
-        }
-
-        return {
-            name: `${item.menu.name} - GH$${item.menu.price} :${descriptionDetails ? ` - ${descriptionDetails}` : ''}`,
-            vendorName: item.restaurant.name,
-            vendorLink: `https://app.merrylow.com/api/vendors/${item.restaurant.id}`,
-            quantity: item.quantity,
-            price: formatPrice(item.totalPrice),
-            note: item.notes,
-        };
-    });
-
-    const emailData = {
-        customerName: populatedOrder.customerName,
-        orderId: populatedOrder.id,
-        orderDate: formatDate(populatedOrder.createdAt),
-        products,
-        subtotal: formatPrice(populatedOrder.totalPrice),
-        shipping: 'Free', // in case something is added to shipping... then total wihh increase by this amount
-        total: formatPrice(populatedOrder.totalPrice),
-        paymentMethod:
-            paymentMethodMap[populatedOrder.paymentMethod] ||
-            populatedOrder.paymentMethod,
-        serviceType: 'Campus Delivery', // Update with actual service type if available
-        serviceDate: formatDate(populatedOrder.createdAt),
-        serviceTime: getCurrentTime(),
-        billingName: populatedOrder.customerName,
-        billingAddress: populatedOrder.address.replace(/\\n/g, '\n'),
-        billingPhone: populatedOrder.customerPhone,
-        billingEmail: populatedOrder.user?.email || 'no-email@example.com',
-        orderNote: populatedOrder.notes,
-    };
-
-    await emailService.sendEmail(
-        emailData.billingEmail,
-        'Order Confirmation',
-        `Your order (#${emailData.orderId}) has been confirmed!`,
-        getUserOrderConfirmationEmail(emailData),
-    );
-
-    const adminEmailData = {
-        ...emailData,
-        serviceType: 'Free Delivery',
-    };
-
-    // Send admin notifications
-    if (adminEmails.length > 0) {
-        console.log(adminEmails);
-        await emailService.sendAdminEmail(
-            'ziglacity@gmail.com', // change this to the Main merrylow account which everyone has access to...
-            adminEmails, // All admins will be BCC'd
-            `New Order: #${adminEmailData.orderId}`,
-            `New order notification for #${adminEmailData.orderId}`,
-            getAdminOrderConfirmationEmail(adminEmailData),
-        );
-    }
+    await sendOrderEmails(order.id);
 
     return {
         message: 'Order placed with Cash on Delivery',

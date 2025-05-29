@@ -1,6 +1,7 @@
 const crypto = require('crypto');
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
+const { sendOrderEmails } = require('../services/sendOrderEmails');
 
 exports.handleWebhook = async (req, res) => {
     const secret = process.env.PAYSTACK_TEST_SECRET_KEY;
@@ -18,7 +19,7 @@ exports.handleWebhook = async (req, res) => {
         const orderId = event.data.metadata.orderId;
 
         try {
-            await prisma.order.update({
+            const order = await prisma.order.update({
                 where: { id: orderId },
                 data: {
                     status: 'PLACED',
@@ -41,6 +42,8 @@ exports.handleWebhook = async (req, res) => {
                     },
                 },
             });
+
+            await sendOrderEmails(order.id);
 
             return res.status(200).send('Payment processed');
         } catch (err) {
