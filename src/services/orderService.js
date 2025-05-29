@@ -42,7 +42,10 @@ exports.placeOrder = async (userId, details, email) => {
             id: generateRandomId(),
             userId,
             status: paymentMethod === 'CASH_ON_DELIVERY' ? 'PLACED' : 'PENDING',
-            paymentMethod,
+            paymentMethod:
+                paymentMethod === 'CASH_ON_DELIVERY' || paymentMethod === 'cod'
+                    ? 'CASH_ON_DELIVERY'
+                    : 'MOBILE_MONEY',
             totalPrice,
             customerName: name,
             customerPhone: phone,
@@ -62,7 +65,10 @@ exports.placeOrder = async (userId, details, email) => {
             payment: {
                 create: {
                     amount: totalPrice,
-                    method: paymentMethod,
+                    method:
+                        paymentMethod === 'CASH_ON_DELIVERY' || paymentMethod === 'cod'
+                            ? 'CASH_ON_DELIVERY'
+                            : 'MOBILE_MONEY',
                     status: paymentMethod === 'CASH_ON_DELIVERY' ? 'PENDING' : 'PENDING',
                 },
             },
@@ -81,7 +87,7 @@ exports.placeOrder = async (userId, details, email) => {
             },
             {
                 headers: {
-                    Authorization: `Bearer ${process.env.PAYSTACK_TEST_SECRET_KEY}`,
+                    Authorization: `Bearer ${process.env.PAYSTACK_LIVE_SECRET_KEY}`,
                     'Content-Type': 'application/json',
                 },
             },
