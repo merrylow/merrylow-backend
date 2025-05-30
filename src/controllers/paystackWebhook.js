@@ -19,7 +19,7 @@ exports.handleWebhook = async (req, res) => {
 
     console.log('Signature verified');
 
-    const event = JSON.parse(req.body.toString());
+    const event = req.body;
     console.log(`Parsed event:`, event);
 
     if (event.event === 'charge.success') {
