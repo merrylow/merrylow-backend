@@ -17,15 +17,9 @@ const paystackWebhook = require('../controllers/paystackWebhook');
 //     paystackWebhook.handleWebhook,
 // );
 
-// Capture raw body before JSON parsing
 router.post(
     '/paystack',
-    express.raw({ type: 'application/json' }), // this ensures req.body is a Buffer
-    (req, res, next) => {
-        req.rawBody = req.body; // store raw body before it gets parsed
-        req.body = JSON.parse(req.rawBody.toString()); // manually parse JSON
-        next();
-    },
+    express.raw({ type: 'application/json' }), // Important: get raw buffer
     paystackWebhook.handleWebhook,
 );
 

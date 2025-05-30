@@ -7,14 +7,13 @@ exports.handleWebhook = async (req, res) => {
     console.log('Paystack webhook called...');
     const secret = process.env.PAYSTACK_TEST_SECRET_KEY;
 
-    const hash = crypto.createHmac('sha512', secret).update(req.rawBody).digest('hex');
+    const hash = crypto.createHmac('sha512', secret).update(req.body).digest('hex');
 
-    // Check if it's really Paystack
     if (hash !== req.headers['x-paystack-signature']) {
         return res.status(401).send('Unauthorized');
     }
 
-    const event = req.body;
+    const event = JSON.parse(req.body);
 
     if (event.event === 'charge.success') {
         const orderId = event.data.metadata.orderId;
