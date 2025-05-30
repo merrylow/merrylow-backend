@@ -28,8 +28,6 @@ app.use(
     }),
 );
 
-app.use('/api/webhook', webhookRoute);
-
 app.use(express.json());
 app.use(cookieParser());
 
@@ -43,6 +41,7 @@ app.use('/api/products', productRoute);
 app.use('/api/vendor', vendorRoute);
 app.use('/api/account', accountRoute);
 app.use('/api/cart', cartRoute);
+app.use('/api/webhook', webhookRoute);
 app.use('/api', homeRoute);
 app.get('/', (req, res) => {
     res.send('Hi, welcome to Merrylow!');
