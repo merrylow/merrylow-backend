@@ -17,11 +17,7 @@ const paystackWebhook = require('../controllers/paystackWebhook');
 //     paystackWebhook.handleWebhook,
 // );
 
-router.post(
-    '/paystack',
-    express.raw({ type: 'application/json' }),
-    paystackWebhook.handleWebhook,
-);
+router.post('/paystack', paystackWebhook.handleWebhook);
 
 router.get('/', (req, res) => {
     console.log('testing the webhook route...');

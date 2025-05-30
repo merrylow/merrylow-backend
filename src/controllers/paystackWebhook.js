@@ -7,7 +7,10 @@ exports.handleWebhook = async (req, res) => {
     console.log('Paystack webhook called...');
     const secret = process.env.PAYSTACK_TEST_SECRET_KEY;
 
-    const hash = crypto.createHmac('sha512', secret).update(req.body).digest('hex');
+    const hash = crypto
+        .createHmac('sha512', secret)
+        .update(JSON.stringify(req.body))
+        .digest('hex');
 
     console.log(`The hash: ${hash}`);
     if (hash !== req.headers['x-paystack-signature']) {
@@ -16,7 +19,7 @@ exports.handleWebhook = async (req, res) => {
 
     console.log('Signature verified');
 
-    const event = JSON.parse(req.body.toString('utf8'));
+    const event = JSON.parse(req.body);
     console.log(`Parsed event:`, event);
 
     if (event.event === 'charge.success') {
