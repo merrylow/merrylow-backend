@@ -19,7 +19,7 @@ const paystackWebhook = require('../controllers/paystackWebhook');
 
 router.post(
     '/paystack',
-    express.raw({ type: 'application/json' }), // Important: get raw buffer
+    express.raw({ type: 'application/json' }),
     paystackWebhook.handleWebhook,
 );
 

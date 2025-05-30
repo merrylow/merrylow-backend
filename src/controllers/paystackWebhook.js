@@ -9,11 +9,15 @@ exports.handleWebhook = async (req, res) => {
 
     const hash = crypto.createHmac('sha512', secret).update(req.body).digest('hex');
 
+    console.log(`The hash: ${hash}`);
     if (hash !== req.headers['x-paystack-signature']) {
         return res.status(401).send('Unauthorized');
     }
 
-    const event = JSON.parse(req.body);
+    console.log('Signature verified');
+
+    const event = JSON.parse(req.body.toString('utf8'));
+    console.log(`Parsed event:`, event);
 
     if (event.event === 'charge.success') {
         const orderId = event.data.metadata.orderId;
@@ -44,7 +48,6 @@ exports.handleWebhook = async (req, res) => {
             });
 
             await sendOrderEmails(order.id);
-
             return res.status(200).send('Payment processed');
         } catch (err) {
             console.error('Error updating order from webhook:', err);
