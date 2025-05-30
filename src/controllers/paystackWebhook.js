@@ -4,6 +4,7 @@ const prisma = new PrismaClient();
 const { sendOrderEmails } = require('../services/sendOrderEmails');
 
 exports.handleWebhook = async (req, res) => {
+    console.log('Paystack webhook called...');
     const secret = process.env.PAYSTACK_TEST_SECRET_KEY;
 
     const hash = crypto.createHmac('sha512', secret).update(req.rawBody).digest('hex');

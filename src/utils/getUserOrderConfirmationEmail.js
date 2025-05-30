@@ -1,22 +1,24 @@
 function getOrderConfirmationEmailUser({
-  customerName = "Customer",
-  orderId = "1234",
-  orderDate = "May 7, 2025",
-  products = [],
-  subtotal = "€0.00",
-  shipping = "Free delivery",
-  paymentMethod = "Mobile Money or Bank Cards",
-  total = "€0.00",
-  serviceType = "Home Delivery",
-  serviceDate = "May 7, 2025",
-  serviceTime = "Evening",
-  billingName = "Diamond Samuel",
-  billingAddress = "International House\nLegon Campus\nGreater Accra",
-  billingPhone = "0558420424",
-  billingEmail = "ziglacity@gmail.com",
-  orderNote = ''
+    customerName = 'Customer',
+    orderId = '1234',
+    orderDate = 'May 7, 2025',
+    products = [],
+    subtotal = '€0.00',
+    shipping = 'Free delivery',
+    paymentMethod = 'Mobile Money or Bank Cards',
+    total = '€0.00',
+    serviceType = 'Home Delivery',
+    serviceDate = 'May 7, 2025',
+    serviceTime = 'Evening',
+    billingName = 'Diamond Samuel',
+    billingAddress = 'International House\nLegon Campus\nGreater Accra',
+    billingPhone = '0558420424',
+    billingEmail = 'ziglacity@gmail.com',
+    orderNote = '',
 }) {
-  const productRows = products.map(p => `
+    const productRows = products
+        .map(
+            (p) => `
     <tr>
       <td>
         ${p.name}<br />
@@ -26,10 +28,11 @@ function getOrderConfirmationEmailUser({
       <td>${p.quantity}</td>
       <td>${p.price}</td>
     </tr>
-  `).join("");
+  `,
+        )
+        .join('');
 
-
-  return `
+    return `
     <!DOCTYPE html>
     <html>
     <head>
@@ -150,13 +153,13 @@ function getOrderConfirmationEmailUser({
           <h3>Customer Address</h3>
           <p>
             ${billingName}<br/>
-            ${billingAddress.replace(/\n/g, "<br/>")}<br/>
+            ${billingAddress.replace(/\n/g, '<br/>')}<br/>
             <a href="tel:${billingPhone}">${billingPhone}</a><br/>
             <a href="mailto:${billingEmail}">${billingEmail}</a>
           </p>
 
           <div class="footer">
-            Thanks for using <a href="https://wp.merrylow.com">wp.merrylow.com</a>!
+            Thanks for using <a href="https://app.merrylow.com">Merrylow</a>!
           </div>
         </div>
       </div>
@@ -164,7 +167,6 @@ function getOrderConfirmationEmailUser({
     </html>
   `;
 }
-
 
 module.exports = getOrderConfirmationEmailUser;
 

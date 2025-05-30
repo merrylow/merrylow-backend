@@ -1,25 +1,39 @@
 function getOrderCompletionEmail({
-  customerName = "Customer",
-  orderId = "1684",
-  orderDate = "May 7, 2025",
-  products = [
-    { name: "Jollof", vendorName: "Willitin", vendorLink: "#", quantity: 1, price: "€19.00" },
-    { name: "Fried Rice", vendorName: "Willitin", vendorLink: "#", quantity: 1, price: "€15.00" }
-  ],
-  subtotal = "€34.00",
-  shipping = "Free delivery",
-  paymentMethod = "Cash on Delivery",
-  total = "€34.00",
-  serviceType = "-",
-  serviceDate = "May 7, 2025",
-  serviceTime = "-",
-  billingName = "Jeffrey Asher",
-  billingAddress = "Akuafo anex B\nUniversity of Ghana, Akuafo anex B\nGreater Accra",
-  billingPhone = "+233531904655",
-  billingEmail = "jeffreyasher71@gmail.com",
-  orderNote = '',
+    customerName = 'Customer',
+    orderId = '1684',
+    orderDate = 'May 7, 2025',
+    products = [
+        {
+            name: 'Jollof',
+            vendorName: 'Willitin',
+            vendorLink: '#',
+            quantity: 1,
+            price: '€19.00',
+        },
+        {
+            name: 'Fried Rice',
+            vendorName: 'Willitin',
+            vendorLink: '#',
+            quantity: 1,
+            price: '€15.00',
+        },
+    ],
+    subtotal = '€34.00',
+    shipping = 'Free delivery',
+    paymentMethod = 'Cash on Delivery',
+    total = '€34.00',
+    serviceType = '-',
+    serviceDate = 'May 7, 2025',
+    serviceTime = '-',
+    billingName = 'Jeffrey Asher',
+    billingAddress = 'Akuafo anex B\nUniversity of Ghana, Akuafo anex B\nGreater Accra',
+    billingPhone = '+233531904655',
+    billingEmail = 'jeffreyasher71@gmail.com',
+    orderNote = '',
 }) {
-  const productRows = products.map(p => `
+    const productRows = products
+        .map(
+            (p) => `
     <tr>
       <td>
         ${p.name}<br />
@@ -29,9 +43,11 @@ function getOrderCompletionEmail({
       <td>${p.quantity}</td>
       <td>${p.price}</td>
     </tr>
-  `).join("");
+  `,
+        )
+        .join('');
 
-  return `
+    return `
     <!DOCTYPE html>
     <html>
     <head>
@@ -148,7 +164,7 @@ function getOrderCompletionEmail({
           <h3>Customer Address</h3>
           <p>
             ${billingName}<br/>
-            ${billingAddress.replace(/\n/g, "<br/>")}<br/>
+            ${billingAddress.replace(/\n/g, '<br/>')}<br/>
             <a href="tel:${billingPhone}">${billingPhone}</a><br/>
             <a href="mailto:${billingEmail}">${billingEmail}</a>
           </p>
@@ -157,7 +173,7 @@ function getOrderCompletionEmail({
           
           <div class="footer">
             Need help? <a href="#">Contact Support</a><br/>
-            &copy; Zigla City 2025
+            &copy; Merrylow 2025
           </div>
         </div>
       </div>
@@ -165,7 +181,6 @@ function getOrderCompletionEmail({
     </html>
   `;
 }
-
 
 module.exports = getOrderCompletionEmail;
 
