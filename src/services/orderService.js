@@ -85,7 +85,7 @@ exports.placeOrder = async (userId, details, email) => {
             },
             {
                 headers: {
-                    Authorization: `Bearer ${process.env.PAYSTACK_TEST_SECRET_KEY}`,
+                    Authorization: `Bearer ${PAYSTACK_KEY}`,
                     'Content-Type': 'application/json',
                 },
             },
