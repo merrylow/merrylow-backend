@@ -3,6 +3,10 @@ const prisma = new PrismaClient();
 const axios = require('axios');
 const generateRandomId = require('../utils/generateRandomId');
 const { sendOrderEmails } = require('./sendOrderEmails');
+const PAYSTACK_KEY =
+    process.env.NODE_ENV === 'development'
+        ? process.env.PAYSTACK_TEST_SECRET_KEY
+        : process.env.PAYSTACK_LIVE_SECRET_KEY;
 
 exports.placeOrder = async (userId, details, email) => {
     const { address, notes, paymentMethod, name, phone } = details;
