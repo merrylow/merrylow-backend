@@ -54,7 +54,7 @@ transporter2.verify((error, success) => {
 async function sendEmail(to, subject, text, html) {
     try {
         const mailOptions = {
-            from: `"MerryLow" <${process.env.ZOHO_USER}>`,
+            from: `"Merrylow" <${process.env.ZOHO_USER}>`,
             to: to,
             subject: subject,
             text: text,
@@ -70,7 +70,7 @@ async function sendEmail(to, subject, text, html) {
 
         try {
             const backupMailOptions = {
-                from: `"MerryLow" <${process.env.GMAIL_USER}>`,
+                from: `"Merrylow" <${process.env.GMAIL_USER}>`,
                 to: to,
                 subject: subject,
                 text: text,
