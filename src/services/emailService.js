@@ -163,7 +163,46 @@ async function sendAdminEmail(primaryEmail, bccEmails, subject, text, html) {
     }
 }
 
+async function sendSecurityEmail(to, subject, text, html) {
+    try {
+        const mailOptions = {
+            from: `"Merrylow" <${process.env.ZOHO_SECURITY_USER}>`,
+            to: to,
+            subject: subject,
+            text: text,
+            html: html,
+        };
+
+        const info = await zohoSecurityTransporter.sendMail(mailOptions);
+        console.log('Security mail sent to users successfully!');
+        return info;
+    } catch (error) {
+        console.error(
+            'Error sending security email with the user Zoho security account:',
+            error,
+        );
+
+        try {
+            const backupMailOptions = {
+                from: `"Merrylow" <${process.env.SECOND_ZOHO_USER}>`,
+                to: to,
+                subject: subject,
+                text: text,
+                html: html,
+            };
+
+            const backupInfo = await zohoTransporter2.sendMail(backupMailOptions);
+            console.log('Backup user email sent successfully!');
+            return backupInfo;
+        } catch (backupError) {
+            console.error('Error sending email with SECOND_ZOHO_USER:', backupError);
+            throw backupError;
+        }
+    }
+}
+
 module.exports = {
     sendEmail,
     sendAdminEmail,
+    sendSecurityEmail,
 };
