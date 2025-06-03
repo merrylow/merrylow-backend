@@ -105,7 +105,7 @@ async function sendEmail(to, subject, text, html) {
 
         try {
             const backupMailOptions = {
-                from: `"Merrylow" <${process.env.GMAIL_USER}>`,
+                from: `"Merrylow" <${process.env.SECOND_ZOHO_USE}>`,
                 to: to,
                 subject: subject,
                 text: text,
@@ -129,7 +129,7 @@ async function sendAdminEmail(primaryEmail, bccEmails, subject, text, html) {
         }
 
         const mailOptions = {
-            from: `"MerryLow" <${process.env.GMAIL_USER}>`,
+            from: `"Merrylow" <${process.env.GMAIL_USER}>`,
             to: primaryEmail,
             cc: Array.isArray(bccEmails) ? bccEmails : [bccEmails],
             subject: subject,
@@ -145,7 +145,7 @@ async function sendAdminEmail(primaryEmail, bccEmails, subject, text, html) {
 
         try {
             const backupMailOptions = {
-                from: `"MerryLow" <${process.env.SECOND_GMAIL_USER}>`,
+                from: `"Merrylow" <${process.env.SECOND_GMAIL_USER}>`,
                 to: primaryEmail,
                 cc: Array.isArray(bccEmails) ? bccEmails : [bccEmails],
                 subject: subject,
