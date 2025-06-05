@@ -111,15 +111,18 @@ exports.getOrders = async (userId) => {
     const order = await prisma.order.findMany({
         where: { userId },
         orderBy: { createdAt: 'desc' },
+        take: 20,
         include: {
             orderItems: {
+                take: 10,
                 include: {
                     menu: true,
+                    restaurant: true,
                 },
             },
-            restaurant: true,
             payment: true,
             delivery: true,
+            user: true,
         },
     });
 
