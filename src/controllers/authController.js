@@ -17,7 +17,11 @@ app.use(cookieParser());
 
 exports.loginUser = async (req, res) => {
     try {
+        if (!req.body.email || !req.body.password) {
+            return sendError(res, 400, 'Email and password are required!');
+        }
         const { email, password } = req.body;
+
         const { accessToken, refreshToken } = await authService.loginUserService(
             email,
             password,
