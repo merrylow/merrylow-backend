@@ -5,7 +5,7 @@ const { sendOrderEmails } = require('../services/sendOrderEmails');
 
 exports.handleWebhook = async (req, res) => {
     console.log('Paystack webhook called...');
-    const secret = process.env.PAYSTACK_TEST_SECRET_KEY;
+    const secret = process.env.PAYSTACK_LIVE_SECRET_KEY;
 
     const hash = crypto
         .createHmac('sha512', secret)
@@ -14,6 +14,7 @@ exports.handleWebhook = async (req, res) => {
 
     console.log(`The hash: ${hash}`);
     if (hash !== req.headers['x-paystack-signature']) {
+        console.log('Hash was not equal to paystack signature');
         return res.status(401).send('Unauthorized');
     }
 
