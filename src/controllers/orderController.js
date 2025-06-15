@@ -6,7 +6,7 @@ exports.getAllOrders = async (req, res) => {
     try {
         const orders = await orderService.getOrders(userId);
 
-        if (!orders || !orders.orderItems || orders.orderItems.length === 0) {
+        if (!orders || orders.length === 0) {
             return sendSuccess(
                 res,
                 200,
@@ -50,8 +50,9 @@ exports.placeOrder = async (req, res) => {
     const email = req.user.email;
     const { name, address, phone, notes, paymentMethod } = req.body;
 
-    // Add input validation for name, address, phone, paymentMethod here
-
+    if (!address || !phone || !paymentMethod || !name) {
+        return sendError(res, 400, 'Order details are required!');
+    }
     try {
         const result = await orderService.placeOrder(
             userId,
@@ -80,7 +81,6 @@ exports.cancelOrder = async (req, res) => {
     const userId = req.user.id;
     const orderId = req.params.orderId;
 
-    // Add validation for orderId
     try {
         const result = await orderService.cancelOrder(orderId, userId);
         return sendSuccess(res, 200, { order: result }, 'Order cancelled');

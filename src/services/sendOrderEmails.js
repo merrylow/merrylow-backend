@@ -7,6 +7,8 @@ const getCurrentTime = require('../utils/getCurrentTime');
 
 const adminEmails = process.env.ADMIN_EMAILS?.split(',') || [];
 
+const DELIVERY_FEE = 5.0;
+
 const formatPrice = (price) =>
     new Intl.NumberFormat('en-GH', {
         style: 'currency',
@@ -77,8 +79,8 @@ async function sendOrderEmails(orderId) {
         orderDate: formatDate(order.createdAt),
         products,
         subtotal: formatPrice(order.totalPrice),
-        shipping: 'Free',
-        total: formatPrice(order.totalPrice),
+        shipping: formatPrice(5.0),
+        total: formatPrice(order.totalPrice.plus(DELIVERY_FEE)),
         paymentMethod: paymentMethodMap[order.paymentMethod] || order.paymentMethod,
         serviceType: 'Campus Delivery',
         serviceDate: formatDate(order.createdAt),

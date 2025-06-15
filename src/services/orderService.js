@@ -10,7 +10,7 @@ const PAYSTACK_KEY =
 
 exports.placeOrder = async (userId, details, email) => {
     const { address, notes, paymentMethod, name, phone } = details;
-
+    const DELIVERY_FEE = 5;
     const cart = await prisma.cart.findUnique({
         where: { userId },
         include: {
@@ -70,6 +70,11 @@ exports.placeOrder = async (userId, details, email) => {
                     status: paymentMethod === 'CASH_ON_DELIVERY' ? 'PENDING' : 'PENDING',
                 },
             },
+            delivery: {
+                create: {
+                    amount: DELIVERY_FEE,
+                },
+            },
         },
     });
 
@@ -80,7 +85,7 @@ exports.placeOrder = async (userId, details, email) => {
             'https://api.paystack.co/transaction/initialize',
             {
                 email,
-                amount: totalPrice.toNumber() * 100, // Paystack expects amount in kobo / pesewas
+                amount: totalPrice.plus(DELIVERY_FEE).toNumber() * 100, // Paystack expects amount in kobo / pesewas
                 metadata: { orderId: order.id },
             },
             {
@@ -154,8 +159,9 @@ exports.cancelOrder = async (orderId, userId) => {
         throw error;
     }
 
-    //user won't be able to cancle after certain status... will be modified later
-    if (!['ACCEPTED', 'IN_PROGRESS'].includes(order.status)) {
+    const nonCancellableStatuses = ['DELIVERED', 'CANCELLED', 'FAILED'];
+
+    if (nonCancellableStatuses.includes(order.status)) {
         const error = new Error('Order cannot be cancelled at this stage');
         error.statusCode = 400;
         throw error;
