@@ -6,7 +6,7 @@ exports.getAllOrders = async (req, res) => {
     try {
         const orders = await orderService.getOrders(userId);
 
-        if (!orders || !orders.orderItems || orders.orderItems.length === 0) {
+        if (!orders || orders.length === 0) {
             return sendSuccess(
                 res,
                 200,
