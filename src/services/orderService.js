@@ -154,8 +154,9 @@ exports.cancelOrder = async (orderId, userId) => {
         throw error;
     }
 
-    //user won't be able to cancle after certain status... will be modified later
-    if (!['ACCEPTED', 'IN_PROGRESS'].includes(order.status)) {
+    const nonCancellableStatuses = ['DELIVERED', 'CANCELLED', 'FAILED'];
+
+    if (nonCancellableStatuses.includes(order.status)) {
         const error = new Error('Order cannot be cancelled at this stage');
         error.statusCode = 400;
         throw error;
