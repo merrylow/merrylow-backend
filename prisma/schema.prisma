@@ -213,12 +213,13 @@ model Rider {
 model Delivery {
   id        String         @id @default(uuid())
   orderId   String         @unique
-  riderId   Int
+  riderId   Int?
+  amount    Decimal        @default(5) @db.Decimal(4, 2)
   status    DeliveryStatus @default(ASSIGNED)
   createdAt DateTime       @default(now())
 
-  order Order @relation(fields: [orderId], references: [id])
-  rider Rider @relation(fields: [riderId], references: [id])
+  order Order  @relation(fields: [orderId], references: [id])
+  rider Rider? @relation(fields: [riderId], references: [id])
 
   @@map("deliveries")
 }
