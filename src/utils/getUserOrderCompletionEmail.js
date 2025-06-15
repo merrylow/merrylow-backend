@@ -19,7 +19,7 @@ function getOrderCompletionEmail({
         },
     ],
     subtotal = '€34.00',
-    shipping = 'Free delivery',
+    shipping = 'GH$ 5.00',
     paymentMethod = 'Cash on Delivery',
     total = '€34.00',
     serviceType = '-',

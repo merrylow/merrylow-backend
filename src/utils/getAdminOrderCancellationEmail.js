@@ -1,21 +1,23 @@
 function getOrderCancellationEmailAdmin({
-  customerName = "Customer",
-  orderId = "1668",
-  orderDate = "May 2, 2025",
-  products = [],
-  subtotal = "€0.00",
-  shipping = "Free delivery",
-  paymentMethod = "Mobile Money or Bank Cards",
-  total = "€0.00",
-  serviceDate = "May 2, 2025",
-  serviceTime = "",
-  billingName = "",
-  billingAddress = "",
-  billingPhone = "",
-  billingEmail = "",
-  orderNote = ''
+    customerName = 'Customer',
+    orderId = '1668',
+    orderDate = 'May 2, 2025',
+    products = [],
+    subtotal = '€0.00',
+    shipping = 'GH$ 5.00',
+    paymentMethod = 'Mobile Money or Bank Cards',
+    total = '€0.00',
+    serviceDate = 'May 2, 2025',
+    serviceTime = '',
+    billingName = '',
+    billingAddress = '',
+    billingPhone = '',
+    billingEmail = '',
+    orderNote = '',
 }) {
-  const productRows = products.map(p => `
+    const productRows = products
+        .map(
+            (p) => `
     <tr>
       <td>
         ${p.name}<br />
@@ -25,9 +27,11 @@ function getOrderCancellationEmailAdmin({
       <td>${p.quantity}</td>
       <td>${p.price}</td>
     </tr>
-  `).join("");
+  `,
+        )
+        .join('');
 
-  return `
+    return `
     <!DOCTYPE html>
     <html>
     <head>
@@ -130,7 +134,7 @@ function getOrderCancellationEmailAdmin({
             </tr>
             <tr>
               <td><strong>Time:</strong></td>
-              <td>${serviceTime || "-"}</td>
+              <td>${serviceTime || '-'}</td>
             </tr>
           </table>
           
@@ -139,7 +143,7 @@ function getOrderCancellationEmailAdmin({
           <h3>Customer Address</h3>
           <p>
             ${billingName}<br/>
-            ${billingAddress.replace(/\n/g, "<br/>")}<br/>
+            ${billingAddress.replace(/\n/g, '<br/>')}<br/>
             <a href="tel:${billingPhone}">${billingPhone}</a><br/>
             <a href="mailto:${billingEmail}">${billingEmail}</a>
           </p>
@@ -153,7 +157,6 @@ function getOrderCancellationEmailAdmin({
     </html>
   `;
 }
-
 
 module.exports = getOrderCancellationEmailAdmin;
 
