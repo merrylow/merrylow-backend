@@ -104,7 +104,7 @@ async function sendOrderEmails(orderId) {
     if (adminEmails.length > 0) {
         const adminEmailData = {
             ...emailData,
-            serviceType: 'Free Delivery',
+            serviceType: 'Paid Delivery',
         };
 
         await emailService.sendAdminEmail(
